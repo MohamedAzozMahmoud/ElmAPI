@@ -3,5 +3,5 @@ using Microsoft.AspNetCore.Http;
 
 namespace Elm.Application.Contracts.Features.Files.Commands
 {
-    public record UploadFileCommand(int curriculumId, int uploadedById, IFormFile FormFile) : IRequest<Result<string>>;
+    public record UploadFileCommand(int curriculumId, int uploadedById, string Description, IFormFile FormFile) : IRequest<Result<string>>;
 }

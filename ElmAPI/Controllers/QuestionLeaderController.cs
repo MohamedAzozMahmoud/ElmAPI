@@ -10,32 +10,21 @@ namespace Elm.API.Controllers
 {
     [Authorize("Leader")]
     [EnableRateLimiting("UserRolePolicy")]
-    [Route("api/[controller]")]
+    [Route("api/leader/[controller]")]
     [ApiController]
-    public class QuestionController : ApiBaseController
+    public class QuestionLeaderController : ApiBaseController
     {
         private readonly IMediator mediator;
 
-        public QuestionController(IMediator _mediator)
+        public QuestionLeaderController(IMediator _mediator)
         {
             mediator = _mediator;
         }
-
-        // GET: api/Question/ByBank/Id
-        [AllowAnonymous]
-        [HttpGet("ByBank/{questionsBankId:int}")]
-        public async Task<IActionResult> GetQuestionsByBankId(int questionsBankId)
-        => HandleResult(await mediator.Send(new GetAllQuestionsQuery(questionsBankId)));
-
-        // GET: api/Question/Id
-        [AllowAnonymous]
-        [HttpGet("{questionId:int}")]
-        public async Task<IActionResult> GetQuestionById(int questionId)
-            => HandleResult(await mediator.Send(new GetQuestionByIdQuery(questionId)));
-
         // GET: api/Question/ExportTemplateForQuestionsQuery/QuestionsBankId
-        [HttpGet("ExportTemplateForQuestions/{questionsBankId:int}")]
-        public async Task<IActionResult> ExportTemplateForQuestions(int questionsBankId)
+        [HttpGet]
+        [Route("ExportTemplateForQuestions/{questionsBankId:int}")]
+        [ProducesResponseType(typeof(FileResult), 200)]
+        public async Task<IActionResult> ExportTemplateForQuestions([FromRoute] int questionsBankId)
         {
             var result = await mediator.Send(new ExportTemplateForQuestionsQuery(questionsBankId));
             if (!result.IsSuccess && result.Data == null)
@@ -47,17 +36,23 @@ namespace Elm.API.Controllers
 
         // POST: api/Question
         [HttpPost]
+        [Route("AddQuestion")]
+        [ProducesResponseType(typeof(QuestionsDto), 200)]
         public async Task<IActionResult> AddQuestion([FromBody] AddQuestionCommand command)
             => HandleResult(await mediator.Send(command));
 
-        // Post : api/Question/AddRingQuestions/QuestionsBankId
-        [HttpPost("AddRingQuestions/{questionsBankId:int}")]
-        public async Task<IActionResult> AddRingQuestions(int questionsBankId, [FromBody] List<AddQuestionsDto> questionsDtos)
+        // POST : api/Question/AddRingQuestions/QuestionsBankId
+        [HttpPost]
+        [Route("AddRingQuestions/{questionsBankId:int}")]
+        [ProducesResponseType(typeof(bool), 200)]
+        public async Task<IActionResult> AddRingQuestions([FromRoute] int questionsBankId, [FromBody] List<AddQuestionsDto> questionsDtos)
             => HandleResult(await mediator.Send(new AddRingQuestionsCommand(questionsBankId, questionsDtos)));
 
-        // Post : api/Question/AddByExcelQuestions/QuestionsBankId
-        [HttpPost("AddByExcelQuestions")]
+        // POST : api/Question/AddByExcelQuestions/QuestionsBankId
+        [HttpPost]
+        [Route("AddByExcelQuestions")]
         [Consumes("multipart/form-data")]
+        [ProducesResponseType(typeof(bool), 200)]
         public async Task<IActionResult> AddByExcelQuestions([FromForm] AddByExcelQuestionsDto addBy)
         {
             if (addBy.File == null)
@@ -72,12 +67,16 @@ namespace Elm.API.Controllers
 
         // PUT: api/Question
         [HttpPut]
+        [Route("UpdateQuestion")]
+        [ProducesResponseType(typeof(QuestionsDto), 200)]
         public async Task<IActionResult> UpdateQuestion([FromBody] UpdateQuestionCommand command)
             => HandleResult(await mediator.Send(command));
 
         // DELETE: api/Question/Id
-        [HttpDelete("{questionId:int}")]
-        public async Task<IActionResult> DeleteQuestion(int questionId)
+        [HttpDelete]
+        [Route("{questionId:int}")]
+        [ProducesResponseType(typeof(bool), 200)]
+        public async Task<IActionResult> DeleteQuestion([FromRoute] int questionId)
             => HandleResult(await mediator.Send(new DeleteQuestionCommand(questionId)));
 
     }

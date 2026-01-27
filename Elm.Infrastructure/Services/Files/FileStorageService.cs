@@ -59,7 +59,7 @@ namespace Elm.Infrastructure.Services.Files
 
 
 
-        public async Task<Result<string>> UploadFileAsync(int curriculumId, int uploadedById, IFormFile file, string folderName)
+        public async Task<Result<string>> UploadFileAsync(int curriculumId, int uploadedById, string description, IFormFile file, string folderName)
         {
             using var tr = await context.Database.BeginTransactionAsync();
             try
@@ -92,6 +92,7 @@ namespace Elm.Infrastructure.Services.Files
                     CurriculumId = curriculumId,
                     ContentType = file.ContentType,
                     Size = file.Length,
+                    Description = description,
                     StorageName = uniqueFileName,
                     ProfessorRating = DoctorRating.NotRated,
                     UploadedById = uploadedById

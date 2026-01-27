@@ -14,7 +14,7 @@ namespace Elm.Application.Features.Files.Handlers
         }
         public async Task<Result<string>> Handle(UploadFileCommand request, CancellationToken cancellationToken)
         {
-            return await fileStorage.UploadFileAsync(request.curriculumId, request.uploadedById, request.FormFile, "Files");
+            return await fileStorage.UploadFileAsync(request.curriculumId, request.uploadedById, request.Description, request.FormFile, "Files");
         }
     }
 }

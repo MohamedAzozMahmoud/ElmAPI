@@ -8,7 +8,6 @@
 
   <ItemGroup>
     <Folder Include="Abstractions\College\" />
-    <Folder Include="Features\Authentication\Queries\" />
     <Folder Include="Features\Options\Queries\" />
     <Folder Include="Features\Test\Queries\" />
   </ItemGroup>

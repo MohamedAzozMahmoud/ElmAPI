@@ -26,11 +26,11 @@ namespace Elm.Test.Unitest.Files
             mockFile.Setup(f => f.FileName).Returns("test.pdf");
             mockFile.Setup(f => f.Length).Returns(1024);
 
-            var command = new UploadFileCommand(1, 10, mockFile.Object);
+            var command = new UploadFileCommand(1, 10, "Test description", mockFile.Object);
             var expectedFileName = "stored_test.pdf";
 
             _mockFileStorage
-                .Setup(f => f.UploadFileAsync(command.curriculumId, command.uploadedById, command.FormFile, "Files"))
+                .Setup(f => f.UploadFileAsync(command.curriculumId, command.uploadedById, command.Description, command.FormFile, "Files"))
                 .ReturnsAsync(Result<string>.Success(expectedFileName));
 
             // Act
@@ -48,10 +48,10 @@ namespace Elm.Test.Unitest.Files
             var mockFile = new Mock<IFormFile>();
             mockFile.Setup(f => f.FileName).Returns("test.pdf");
 
-            var command = new UploadFileCommand(1, 10, mockFile.Object);
+            var command = new UploadFileCommand(1, 10, "Test description", mockFile.Object);
 
             _mockFileStorage
-                .Setup(f => f.UploadFileAsync(command.curriculumId, command.uploadedById, command.FormFile, "Files"))
+                .Setup(f => f.UploadFileAsync(command.curriculumId, command.uploadedById, command.Description, command.FormFile, "Files"))
                 .ReturnsAsync(Result<string>.Failure("Upload failed"));
 
             // Act
@@ -69,17 +69,17 @@ namespace Elm.Test.Unitest.Files
             var mockFile = new Mock<IFormFile>();
             var curriculumId = 5;
             var uploadedById = 15;
-            var command = new UploadFileCommand(curriculumId, uploadedById, mockFile.Object);
+            var command = new UploadFileCommand(curriculumId, uploadedById, "Test description", mockFile.Object);
 
             _mockFileStorage
-                .Setup(f => f.UploadFileAsync(curriculumId, uploadedById, mockFile.Object, "Files"))
+                .Setup(f => f.UploadFileAsync(curriculumId, uploadedById, "Test description", mockFile.Object, "Files"))
                 .ReturnsAsync(Result<string>.Success("file.pdf"));
 
             // Act
             await _handler.Handle(command, CancellationToken.None);
 
             // Assert
-            _mockFileStorage.Verify(f => f.UploadFileAsync(curriculumId, uploadedById, mockFile.Object, "Files"), Times.Once);
+            _mockFileStorage.Verify(f => f.UploadFileAsync(curriculumId, uploadedById, "Test description", mockFile.Object, "Files"), Times.Once);
         }
 
         [Fact]
@@ -87,17 +87,17 @@ namespace Elm.Test.Unitest.Files
         {
             // Arrange
             var mockFile = new Mock<IFormFile>();
-            var command = new UploadFileCommand(1, 1, mockFile.Object);
+            var command = new UploadFileCommand(1, 1, "Test description", mockFile.Object);
 
             _mockFileStorage
-                .Setup(f => f.UploadFileAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<IFormFile>(), "Files"))
+                .Setup(f => f.UploadFileAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<IFormFile>(), "Files"))
                 .ReturnsAsync(Result<string>.Success("file.pdf"));
 
             // Act
             await _handler.Handle(command, CancellationToken.None);
 
             // Assert
-            _mockFileStorage.Verify(f => f.UploadFileAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<IFormFile>(), "Files"), Times.Once);
+            _mockFileStorage.Verify(f => f.UploadFileAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<IFormFile>(), "Files"), Times.Once);
         }
 
         [Theory]
@@ -108,17 +108,17 @@ namespace Elm.Test.Unitest.Files
         {
             // Arrange
             var mockFile = new Mock<IFormFile>();
-            var command = new UploadFileCommand(curriculumId, uploadedById, mockFile.Object);
+            var command = new UploadFileCommand(curriculumId, uploadedById, "Test description", mockFile.Object);
 
             _mockFileStorage
-                .Setup(f => f.UploadFileAsync(curriculumId, uploadedById, mockFile.Object, "Files"))
+                .Setup(f => f.UploadFileAsync(curriculumId, uploadedById, "Test description", mockFile.Object, "Files"))
                 .ReturnsAsync(Result<string>.Success("file.pdf"));
 
             // Act
             await _handler.Handle(command, CancellationToken.None);
 
             // Assert
-            _mockFileStorage.Verify(f => f.UploadFileAsync(curriculumId, uploadedById, mockFile.Object, "Files"), Times.Once);
+            _mockFileStorage.Verify(f => f.UploadFileAsync(curriculumId, uploadedById, "Test description", mockFile.Object, "Files"), Times.Once);
         }
     }
 }

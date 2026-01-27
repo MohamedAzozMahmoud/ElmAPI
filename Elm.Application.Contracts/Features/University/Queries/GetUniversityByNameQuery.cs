@@ -3,8 +3,8 @@ using MediatR;
 
 namespace Elm.Application.Contracts.Features.University.Queries
 {
-    public record GetUniversityByIdQuery
+    public record GetUniversityByNameQuery
     (
-        int Id
+        string Name
     ) : IRequest<Result<UniversityDetialsDto>>;
 }

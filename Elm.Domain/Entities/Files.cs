@@ -6,6 +6,7 @@ namespace Elm.Domain.Entities
     {
         public int Id { get; set; }
         public string Name { get; set; } = null!;
+        public string Description { get; set; }
         public string StorageName { get; set; } = null!;
         public string ContentType { get; set; } = null!;
         public long Size { get; set; }

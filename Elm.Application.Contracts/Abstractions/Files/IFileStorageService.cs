@@ -7,7 +7,7 @@ namespace Elm.Application.Contracts.Abstractions.Files
 {
     public interface IFileStorageService
     {
-        public Task<Result<string>> UploadFileAsync(int curriculumId, int uploadedById, IFormFile file, string folderName);
+        public Task<Result<string>> UploadFileAsync(int curriculumId, int uploadedById, string description, IFormFile file, string folderName);
 
         public Task<Result<string>> UploadImageAsync(IFormFile file, string folderName);
         // ميثود لحذف ملف
