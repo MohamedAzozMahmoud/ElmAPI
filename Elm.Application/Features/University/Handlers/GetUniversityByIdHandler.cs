@@ -6,16 +6,16 @@ using MediatR;
 
 namespace Elm.Application.Features.University.Handlers
 {
-    public sealed class GetUniversityByIdHandler : IRequestHandler<GetUniversityByIdQuery, Result<UniversityDetialsDto>>
+    public sealed class GetUniversityByIdHandler : IRequestHandler<GetUniversityByNameQuery, Result<UniversityDetialsDto>>
     {
         private readonly IUniversityRepository repository;
         public GetUniversityByIdHandler(IUniversityRepository repository)
         {
             this.repository = repository;
         }
-        public async Task<Result<UniversityDetialsDto>> Handle(GetUniversityByIdQuery request, CancellationToken cancellationToken)
+        public async Task<Result<UniversityDetialsDto>> Handle(GetUniversityByNameQuery request, CancellationToken cancellationToken)
         {
-            var university = await repository.UniversityDetialsAsync(request.Id);
+            var university = await repository.UniversityDetialsAsync(request.Name);
             if (university == null)
             {
                 return Result<UniversityDetialsDto>.Failure("University not found", 404);

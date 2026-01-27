@@ -1,4 +1,3 @@
-using Elm.Application.Contracts;
 using Elm.Application.Contracts.Features.University.DTOs;
 using Elm.Application.Contracts.Features.University.Queries;
 using Elm.Application.Contracts.Repositories;
@@ -22,7 +21,7 @@ namespace Elm.Test.Unitest
         public async Task Handle_UniversityExists_ReturnsSuccessWithUniversityDetails()
         {
             // Arrange
-            var query = new GetUniversityByIdQuery(1);
+            var query = new GetUniversityByNameQuery("m");
             var expectedUniversity = new UniversityDetialsDto
             {
                 Id = 1,
@@ -31,7 +30,7 @@ namespace Elm.Test.Unitest
             };
 
             _mockRepository
-                .Setup(r => r.UniversityDetialsAsync(1))
+                .Setup(r => r.UniversityDetialsAsync("m"))
                 .ReturnsAsync(expectedUniversity);
 
             // Act
@@ -49,10 +48,10 @@ namespace Elm.Test.Unitest
         public async Task Handle_UniversityNotFound_ReturnsFailure()
         {
             // Arrange
-            var query = new GetUniversityByIdQuery(999);
+            var query = new GetUniversityByNameQuery("nonexistent");
 
             _mockRepository
-                .Setup(r => r.UniversityDetialsAsync(999))
+                .Setup(r => r.UniversityDetialsAsync("nonexistent"))
                 .ReturnsAsync((UniversityDetialsDto?)null);
 
             // Act
@@ -68,7 +67,7 @@ namespace Elm.Test.Unitest
         public async Task Handle_ValidQuery_CallsRepositoryUniversityDetialsAsync()
         {
             // Arrange
-            var query = new GetUniversityByIdQuery(5);
+            var query = new GetUniversityByNameQuery("m");
             var expectedUniversity = new UniversityDetialsDto
             {
                 Id = 5,
@@ -77,21 +76,21 @@ namespace Elm.Test.Unitest
             };
 
             _mockRepository
-                .Setup(r => r.UniversityDetialsAsync(5))
+                .Setup(r => r.UniversityDetialsAsync("m"))
                 .ReturnsAsync(expectedUniversity);
 
             // Act
             await _handler.Handle(query, CancellationToken.None);
 
             // Assert
-            _mockRepository.Verify(r => r.UniversityDetialsAsync(5), Times.Once);
+            _mockRepository.Verify(r => r.UniversityDetialsAsync("m"), Times.Once);
         }
 
         [Fact]
         public async Task Handle_UniversityExists_ReturnsStatusCode200()
         {
             // Arrange
-            var query = new GetUniversityByIdQuery(1);
+            var query = new GetUniversityByNameQuery("m");
             var expectedUniversity = new UniversityDetialsDto
             {
                 Id = 1,
@@ -100,7 +99,7 @@ namespace Elm.Test.Unitest
             };
 
             _mockRepository
-                .Setup(r => r.UniversityDetialsAsync(1))
+                .Setup(r => r.UniversityDetialsAsync("m"))
                 .ReturnsAsync(expectedUniversity);
 
             // Act
@@ -114,10 +113,10 @@ namespace Elm.Test.Unitest
         public async Task Handle_UniversityNotFound_ReturnsStatusCode404()
         {
             // Arrange
-            var query = new GetUniversityByIdQuery(999);
+            var query = new GetUniversityByNameQuery("nonexistent");
 
             _mockRepository
-                .Setup(r => r.UniversityDetialsAsync(999))
+                .Setup(r => r.UniversityDetialsAsync("nonexistent"))
                 .ReturnsAsync((UniversityDetialsDto?)null);
 
             // Act
@@ -131,7 +130,7 @@ namespace Elm.Test.Unitest
         public async Task Handle_UniversityWithNullImageName_ReturnsSuccess()
         {
             // Arrange
-            var query = new GetUniversityByIdQuery(1);
+            var query = new GetUniversityByNameQuery("m");
             var expectedUniversity = new UniversityDetialsDto
             {
                 Id = 1,
@@ -140,7 +139,7 @@ namespace Elm.Test.Unitest
             };
 
             _mockRepository
-                .Setup(r => r.UniversityDetialsAsync(1))
+                .Setup(r => r.UniversityDetialsAsync("m"))
                 .ReturnsAsync(expectedUniversity);
 
             // Act
@@ -152,43 +151,13 @@ namespace Elm.Test.Unitest
         }
 
         [Fact]
-        public async Task Handle_DifferentIds_CallsRepositoryWithCorrectId()
-        {
-            // Arrange
-            var queries = new[] { 1, 10, 100, 1000 };
-
-            foreach (var id in queries)
-            {
-                var query = new GetUniversityByIdQuery(id);
-                var expectedUniversity = new UniversityDetialsDto
-                {
-                    Id = id,
-                    Name = $"University {id}",
-                    ImageName = $"image-{id}.jpg"
-                };
-
-                _mockRepository
-                    .Setup(r => r.UniversityDetialsAsync(id))
-                    .ReturnsAsync(expectedUniversity);
-
-                // Act
-                var result = await _handler.Handle(query, CancellationToken.None);
-
-                // Assert
-                Assert.True(result.IsSuccess);
-                Assert.Equal(id, result.Data?.Id);
-                _mockRepository.Verify(r => r.UniversityDetialsAsync(id), Times.Once);
-            }
-        }
-
-        [Fact]
         public async Task Handle_UniversityNotFound_DataIsNull()
         {
             // Arrange
-            var query = new GetUniversityByIdQuery(999);
+            var query = new GetUniversityByNameQuery("nonexistent");
 
             _mockRepository
-                .Setup(r => r.UniversityDetialsAsync(999))
+                .Setup(r => r.UniversityDetialsAsync("nonexistent"))
                 .ReturnsAsync((UniversityDetialsDto?)null);
 
             // Act
@@ -202,17 +171,16 @@ namespace Elm.Test.Unitest
         public async Task Handle_ZeroId_CallsRepository()
         {
             // Arrange
-            var query = new GetUniversityByIdQuery(0);
-
+            var query = new GetUniversityByNameQuery("0");
             _mockRepository
-                .Setup(r => r.UniversityDetialsAsync(0))
+                .Setup(r => r.UniversityDetialsAsync("0"))
                 .ReturnsAsync((UniversityDetialsDto?)null);
 
             // Act
             var result = await _handler.Handle(query, CancellationToken.None);
 
             // Assert
-            _mockRepository.Verify(r => r.UniversityDetialsAsync(0), Times.Once);
+            _mockRepository.Verify(r => r.UniversityDetialsAsync("0"), Times.Once);
             Assert.False(result.IsSuccess);
         }
 
@@ -220,17 +188,17 @@ namespace Elm.Test.Unitest
         public async Task Handle_NegativeId_CallsRepository()
         {
             // Arrange
-            var query = new GetUniversityByIdQuery(-1);
+            var query = new GetUniversityByNameQuery("-1");
 
             _mockRepository
-                .Setup(r => r.UniversityDetialsAsync(-1))
+                .Setup(r => r.UniversityDetialsAsync("-1"))
                 .ReturnsAsync((UniversityDetialsDto?)null);
 
             // Act
             var result = await _handler.Handle(query, CancellationToken.None);
 
             // Assert
-            _mockRepository.Verify(r => r.UniversityDetialsAsync(-1), Times.Once);
+            _mockRepository.Verify(r => r.UniversityDetialsAsync("-1"), Times.Once);
             Assert.False(result.IsSuccess);
         }
     }

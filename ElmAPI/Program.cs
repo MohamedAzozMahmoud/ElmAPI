@@ -17,6 +17,7 @@ using Elm.Infrastructure.Services.Files;
 using Elm.Infrastructure.Services.Realtime;
 using Elm.Infrastructure.Services.TestService;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.SignalR;
@@ -161,6 +162,9 @@ namespace ElmAPI
                 });
             #endregion
 
+            builder.Services.AddAuthorization();
+
+
             builder.Services.AddSignalR();
             builder.Services.AddSingleton<IUserIdProvider, UserIdProvider>();
             builder.Services.AddMemoryCache();
@@ -233,10 +237,53 @@ namespace ElmAPI
             });
 
             #endregion
+
             builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
             builder.Services.AddProblemDetails();
 
             builder.Services.AddHttpContextAccessor();
+            builder.Configuration
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true)
+                .AddEnvironmentVariables();  // ← هذا مهم جداً!
+
+            if (builder.Environment.IsProduction())
+            {
+                // في الإنتاج: استخدم مجلد ثابت
+                var keysDirectory = Path.Combine(builder.Environment.ContentRootPath, "App_Data", "DataProtection-Keys");
+
+                if (!Directory.Exists(keysDirectory))
+                {
+                    Directory.CreateDirectory(keysDirectory);
+                }
+
+                builder.Services.AddDataProtection()
+                    .SetApplicationName("ElmAPI")
+                    .PersistKeysToFileSystem(new DirectoryInfo(keysDirectory))
+                    .SetDefaultKeyLifetime(TimeSpan.FromDays(90)); // مدة صلاحية المفتاح
+            }
+            else
+            {
+                // في التطوير: الإعدادات الافتراضية كافية
+                builder.Services.AddDataProtection()
+                    .SetApplicationName("ElmAPI");
+            }
+            builder.Services.AddOpenApiDocument(cfg =>
+            {
+                cfg.Title = "ElmAPI";
+                cfg.AddSecurity("JWT", new NSwag.OpenApiSecurityScheme
+                {
+                    Type = NSwag.OpenApiSecuritySchemeType.ApiKey,
+                    Name = "Authorization",
+                    In = NSwag.OpenApiSecurityApiKeyLocation.Header,
+                    Description = "Bearer {token}"
+                });
+
+                // يضيف متطلبات الـ security للـ actions التي تحتوي على [Authorize] ويتجاهل [AllowAnonymous]
+                cfg.OperationProcessors.Add(new NSwag.Generation.Processors.Security.AspNetCoreOperationSecurityScopeProcessor("JWT"));
+            });
+
 
             // Add Scalar API Reference
             builder.Services.AddControllers();
@@ -248,8 +295,8 @@ namespace ElmAPI
             // Configure the HTTP request pipeline.
             //if (app.Environment.IsDevelopment())
             //{
-            app.MapScalarApiReference();
             app.MapOpenApi();
+            app.MapScalarApiReference();
             //}
             //======== ( Global Handler Exception  ) ==============
 

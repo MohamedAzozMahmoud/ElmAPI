@@ -6,14 +6,14 @@ using MediatR;
 
 namespace Elm.Application.Features.College.Handlers
 {
-    public sealed class GetAllCollegeHandler : IRequestHandler<GetAllCollegeQuery, Result<List<GetCollegeDto>>>
+    public sealed class GetAllCollegeHandler : IRequestHandler<GetAllCollegesQuery, Result<List<GetCollegeDto>>>
     {
         private readonly ICollegeRepository _collegeRepository;
         public GetAllCollegeHandler(ICollegeRepository collegeRepository)
         {
             _collegeRepository = collegeRepository;
         }
-        public async Task<Result<List<GetCollegeDto>>> Handle(GetAllCollegeQuery request, CancellationToken cancellationToken)
+        public async Task<Result<List<GetCollegeDto>>> Handle(GetAllCollegesQuery request, CancellationToken cancellationToken)
         {
             try
             {

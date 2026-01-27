@@ -1,5 +1,4 @@
 ﻿using Elm.Application.Contracts.Features.Images.Commands;
-using Elm.Application.Contracts.Features.Images.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -9,50 +8,44 @@ namespace Elm.API.Controllers
 {
     [Authorize("Admin")]
     [EnableRateLimiting("UserRolePolicy")]
-    [Route("api/[controller]")]
+    [Route("api/admin/[controller]")]
     [ApiController]
-    public class ImageController : ApiBaseController
+    public class ImageAdminController : ApiBaseController
     {
         private readonly IMediator mediator;
 
-        public ImageController(IMediator _mediator)
+        public ImageAdminController(IMediator _mediator)
         {
             mediator = _mediator;
         }
         // POST: api/Image
-        [HttpPost("UploadCollegeImage")]
+        [HttpPost]
+        [Route("UploadCollegeImage")]
         [Consumes("multipart/form-data")]
+        [ProducesResponseType(typeof(bool), 200)]
         public async Task<IActionResult> UploadCollegeImage([FromForm] AddCollegeImageCommand command)
         => HandleResult(await mediator.Send(command));
 
         // POST: api/Image
-        [HttpPost("UploadUniversityImage")]
+        [HttpPost]
+        [Route("UploadUniversityImage")]
         [Consumes("multipart/form-data")]
+        [ProducesResponseType(typeof(bool), 200)]
         public async Task<IActionResult> UploadUniversityImage([FromForm] AddUniversityImageCommand command)
         => HandleResult(await mediator.Send(command));
 
         // DELETE: api/Image
-        [HttpDelete("DeleteCollegeImage")]
+        [HttpDelete]
+        [Route("DeleteCollegeImage")]
+        [ProducesResponseType(typeof(bool), 200)]
         public async Task<IActionResult> DeleteCollegeImage([FromQuery] DeleteCollegeImageCommand command)
         => HandleResult(await mediator.Send(command));
 
         // DELETE: api/Image
-        [HttpDelete("DeleteUniversityImage")]
+        [HttpDelete]
+        [Route("DeleteUniversityImage")]
+        [ProducesResponseType(typeof(bool), 200)]
         public async Task<IActionResult> DeleteUniversityImage([FromQuery] DeleteUniversityImageCommand command)
             => HandleResult(await mediator.Send(command));
-
-        // GET: api/Image
-        [AllowAnonymous]
-        [DisableRateLimiting]
-        [HttpGet("ShowImageFromUrl/{fileName}")]
-        public async Task<IActionResult> ShowImageFromUrl(string fileName)
-        {
-            var result = await mediator.Send(new showImageFromUrlCommand(fileName));
-            if (!result.IsSuccess || result.Data == null) return HandleResult(result);
-
-            // ارجاع الملف كـ FileStreamResult
-            return File(result.Data.Content, result.Data.ContentType);
-        }
-
     }
 }

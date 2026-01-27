@@ -6,6 +6,7 @@ using Elm.Application.Contracts.Features.Options.DTOs;
 using Elm.Application.Contracts.Features.Permissions.DTOs;
 using Elm.Application.Contracts.Features.Questions.DTOs;
 using Elm.Application.Contracts.Features.QuestionsBank.DTOs;
+using Elm.Application.Contracts.Features.Roles.DTOs;
 using Elm.Application.Contracts.Features.Subject.DTOs;
 using Elm.Application.Contracts.Features.University.DTOs;
 using Elm.Application.Contracts.Features.Year.DTOs;
@@ -110,6 +111,14 @@ namespace Elm.Application.AutoMapper
 
             CreateMap<Option, AddOptionsDto>()
                 .ReverseMap();
+
+            #endregion
+
+            #region Role Mappings
+
+            CreateMap<RoleDto, string>()
+                 .ForMember(dest => dest,
+                           opt => opt.MapFrom(src => src.Name));
 
             #endregion
 

@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace Elm.Application.Features.Roles.Handlers
 {
+
     public sealed class GetRolesHandler : IRequestHandler<GetRolesQuery, Result<IEnumerable<RoleDto>>>
     {
         private readonly RoleManager<Role> roleManager;

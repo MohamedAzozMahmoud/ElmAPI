@@ -1,4 +1,5 @@
 ﻿using Elm.Application.Contracts.Features.Permissions.Commands;
+using Elm.Application.Contracts.Features.Permissions.DTOs;
 using Elm.Application.Contracts.Features.Permissions.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -9,30 +10,38 @@ namespace Elm.API.Controllers
 {
     [Authorize("Admin")]
     [EnableRateLimiting("UserRolePolicy")]
-    [Route("api/[controller]")]
+    [Route("api/admin/[controller]")]
     [ApiController]
-    public class PermissionController : ApiBaseController
+    public class PermissionAdminController : ApiBaseController
     {
         private readonly IMediator mediator;
 
-        public PermissionController(IMediator mediator)
+        public PermissionAdminController(IMediator mediator)
         {
             this.mediator = mediator;
         }
-        [HttpPost("AddPermission")]
+        [HttpPost]
+        [Route("AddPermission")]
+        [ProducesResponseType(typeof(PermissionDto), 200)]
         public async Task<IActionResult> AddPermission([FromBody] AddPermissionCommand command) =>
             HandleResult(await mediator.Send(command));
 
-        [HttpPut("UpdatePermission")]
+        [HttpPut]
+        [Route("UpdatePermission")]
+        [ProducesResponseType(typeof(PermissionDto), 200)]
         public async Task<IActionResult> UpdatePermission([FromBody] UpdatePermissionCommand command) =>
             HandleResult(await mediator.Send(command));
 
-        [HttpGet("GetAllPermissions")]
+        [HttpGet]
+        [Route("GetAllPermissions")]
+        [ProducesResponseType(typeof(IEnumerable<PermissionDto>), 200)]
         public async Task<IActionResult> GetAllPermissions() =>
             HandleResult(await mediator.Send(new GetAllPermissionsQuery()));
 
-        [HttpDelete("DeletePermission")]
-        public async Task<IActionResult> DeletePermission([FromBody] DeletePermissionCommand command) =>
-            HandleResult(await mediator.Send(command));
+        [HttpDelete]
+        [Route("DeletePermission/{Id:int}")]
+        [ProducesResponseType(typeof(bool), 200)]
+        public async Task<IActionResult> DeletePermission([FromRoute] int Id) =>
+            HandleResult(await mediator.Send(new DeletePermissionCommand(Id)));
     }
 }
