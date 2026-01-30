@@ -15,6 +15,7 @@ namespace Elm.Infrastructure.Repositories
         public async Task<UniversityDetialsDto> UniversityDetialsAsync(string universityName)
         {
             return await context.Universities
+                .AsNoTracking()
                 .Where(u => u.Name == universityName)
                 .Include(u => u.Img)
                 .Select(u => new UniversityDetialsDto
@@ -23,7 +24,6 @@ namespace Elm.Infrastructure.Repositories
                     Name = u.Name,
                     ImageName = u.Img.StorageName
                 })
-                .AsNoTracking()
                 .SingleOrDefaultAsync(x => x.Name == universityName) ?? new UniversityDetialsDto();
         }
     }

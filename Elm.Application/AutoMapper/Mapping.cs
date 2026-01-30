@@ -117,9 +117,7 @@ namespace Elm.Application.AutoMapper
             #region Role Mappings
 
             CreateMap<RoleDto, string>()
-                 .ForMember(dest => dest,
-                           opt => opt.MapFrom(src => src.Name));
-
+                .ConvertUsing(src => src.Name);
             #endregion
 
         }

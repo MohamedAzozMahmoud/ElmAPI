@@ -1,4 +1,5 @@
-﻿using Elm.Application.Contracts.Features.Test.Commands;
+﻿using Elm.Application.Contracts;
+using Elm.Application.Contracts.Features.Test.Commands;
 using Elm.Application.Contracts.Features.Test.DTOs;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -21,7 +22,7 @@ namespace Elm.API.Controllers
         // post: api/test/start
         [HttpPost]
         [Route("start")]
-        [ProducesResponseType(typeof(TestDataDto), 200)]
+        [ProducesResponseType(typeof(Result<TestDataDto>), 200)]
         public async Task<IActionResult> StartTest([FromBody] StartTestCommand command)
         => HandleResult(await mediator.Send(command));
 
@@ -29,7 +30,7 @@ namespace Elm.API.Controllers
         // post: api/test/submit
         [HttpPost]
         [Route("submit")]
-        [ProducesResponseType(typeof(TestResultDto), 200)]
+        [ProducesResponseType(typeof(Result<TestResultDto>), 200)]
         public async Task<IActionResult> SubmitTest([FromBody] SubmitTestCommand command)
             => HandleResult(await mediator.Send(command));
 

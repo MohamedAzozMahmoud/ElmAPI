@@ -16,13 +16,13 @@ namespace Elm.Infrastructure.Repositories
         public async Task<List<GetDepartmentDto>> GetAllDepartmentInCollegeAsync(int yearId)
         {
             return await context.Departments
+                .AsNoTracking()
                 .Where(d => d.Curriculums.Select(c => c.YearId).Contains(yearId))
                 .Select(d => new GetDepartmentDto
                 {
                     Id = d.Id,
                     Name = d.Name
                 })
-                .AsNoTracking()
                 .ToListAsync();
         }
     }

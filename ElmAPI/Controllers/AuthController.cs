@@ -1,4 +1,5 @@
-﻿using Elm.Application.Contracts.Features.Authentication.Commands;
+﻿using Elm.Application.Contracts;
+using Elm.Application.Contracts.Features.Authentication.Commands;
 using Elm.Application.Contracts.Features.Authentication.DTOs;
 using Elm.Application.Contracts.Features.Authentication.Queries;
 using Elm.Domain.Entities;
@@ -34,7 +35,7 @@ namespace Elm.API.Controllers
         //[Authorize(Roles = "Admin")]
         [HttpPost]
         [Route("RegisterAdmin")]
-        [ProducesResponseType(typeof(bool), 200)]
+        [ProducesResponseType(typeof(Result<bool>), 200)]
         public async Task<IActionResult> RegisterAdmin([FromBody] RegisterCommand command) =>
             HandleResult(await _mediator.Send(command));
 
@@ -42,7 +43,7 @@ namespace Elm.API.Controllers
         //[Authorize(Roles = "Admin")]
         [HttpPost]
         [Route("RegisterStudent")]
-        [ProducesResponseType(typeof(bool), 200)]
+        [ProducesResponseType(typeof(Result<bool>), 200)]
         public async Task<IActionResult> RegisterStudent([FromBody] RegisterStudentCommand command) =>
             HandleResult(await _mediator.Send(command));
 
@@ -50,7 +51,7 @@ namespace Elm.API.Controllers
         //[Authorize(Roles = "Admin")]
         [HttpPost]
         [Route("RegisterDoctor")]
-        [ProducesResponseType(typeof(bool), 200)]
+        [ProducesResponseType(typeof(Result<bool>), 200)]
         public async Task<IActionResult> RegisterDoctor([FromBody] RegisterDoctorCommand command) =>
             HandleResult(await _mediator.Send(command));
 
@@ -59,7 +60,7 @@ namespace Elm.API.Controllers
         [HttpPost]
         [Route("Login")]
         [EnableRateLimiting("LoginPolicy")]
-        [ProducesResponseType(typeof(AuthModelDto), 200)]
+        [ProducesResponseType(typeof(Result<AuthModelDto>), 200)]
         public async Task<IActionResult> Login([FromBody] LoginCommand command)
         {
             var result = HandleResult(await _mediator.Send(command));
@@ -77,14 +78,14 @@ namespace Elm.API.Controllers
         // POST: api/Auth/ChangePassword
         [HttpPost]
         [Route("ChangePassword")]
-        [ProducesResponseType(typeof(bool), 200)]
+        [ProducesResponseType(typeof(Result<bool>), 200)]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordCommand command)
             => HandleResult(await _mediator.Send(command));
 
         //POST: api/Auth/ResetPassword
         //[HttpPost]
         //[Route("ResetPassword")]
-        //[ProducesResponseType(typeof(bool), 200)]
+        //[ProducesResponseType(typeof(Result<bool>), 200)]
         //public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordCommand command)
         //    => HandleResult(await _mediator.Send(command));
 
@@ -92,7 +93,7 @@ namespace Elm.API.Controllers
         //[DisableRateLimiting]
         [HttpPost]
         [Route("RefreshToken")]
-        [ProducesResponseType(typeof(AuthModelDto), 200)]
+        [ProducesResponseType(typeof(Result<AuthModelDto>), 200)]
         public async Task<IActionResult> RefreshToken() //[FromBody] RefreshTokenCommand command)
         {
             var origin = Request.Headers["Origin"].ToString();
@@ -167,12 +168,13 @@ namespace Elm.API.Controllers
         //[Authorize(Roles = "Admin")]
         [HttpDelete]
         [Route("Delete")]
-        [ProducesResponseType(typeof(bool), 200)]
+        [ProducesResponseType(typeof(Result<bool>), 200)]
         public async Task<IActionResult> Delete([FromBody] DeleteCommand command)
             => HandleResult(await _mediator.Send(command));
 
         [HttpGet]
         [Route("GetAllUsers/{role:alpha}")]
+        [ProducesResponseType(typeof(Result<IEnumerable<UserDto>>), 200)]
         public async Task<IActionResult> GetAllUsers([FromRoute] string role)
         => HandleResult(await _mediator.Send(new GetAllUsersQuery(role)));
 

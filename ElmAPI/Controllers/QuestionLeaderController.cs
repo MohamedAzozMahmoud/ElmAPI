@@ -1,15 +1,14 @@
-﻿using Elm.Application.Contracts.Features.Questions.Commands;
+﻿using Elm.Application.Contracts;
+using Elm.Application.Contracts.Features.Questions.Commands;
 using Elm.Application.Contracts.Features.Questions.DTOs;
 using Elm.Application.Contracts.Features.Questions.Queries;
 using MediatR;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.RateLimiting;
 
 namespace Elm.API.Controllers
 {
-    [Authorize("Leader")]
-    [EnableRateLimiting("UserRolePolicy")]
+    //[Authorize("Leader")]
+    //[EnableRateLimiting("UserRolePolicy")]
     [Route("api/leader/[controller]")]
     [ApiController]
     public class QuestionLeaderController : ApiBaseController
@@ -23,7 +22,7 @@ namespace Elm.API.Controllers
         // GET: api/Question/ExportTemplateForQuestionsQuery/QuestionsBankId
         [HttpGet]
         [Route("ExportTemplateForQuestions/{questionsBankId:int}")]
-        [ProducesResponseType(typeof(FileResult), 200)]
+        [ProducesResponseType(typeof(FileStreamResult), 200)]
         public async Task<IActionResult> ExportTemplateForQuestions([FromRoute] int questionsBankId)
         {
             var result = await mediator.Send(new ExportTemplateForQuestionsQuery(questionsBankId));
@@ -37,14 +36,14 @@ namespace Elm.API.Controllers
         // POST: api/Question
         [HttpPost]
         [Route("AddQuestion")]
-        [ProducesResponseType(typeof(QuestionsDto), 200)]
+        [ProducesResponseType(typeof(Result<QuestionsDto>), 200)]
         public async Task<IActionResult> AddQuestion([FromBody] AddQuestionCommand command)
             => HandleResult(await mediator.Send(command));
 
         // POST : api/Question/AddRingQuestions/QuestionsBankId
         [HttpPost]
         [Route("AddRingQuestions/{questionsBankId:int}")]
-        [ProducesResponseType(typeof(bool), 200)]
+        [ProducesResponseType(typeof(Result<bool>), 200)]
         public async Task<IActionResult> AddRingQuestions([FromRoute] int questionsBankId, [FromBody] List<AddQuestionsDto> questionsDtos)
             => HandleResult(await mediator.Send(new AddRingQuestionsCommand(questionsBankId, questionsDtos)));
 
@@ -52,7 +51,7 @@ namespace Elm.API.Controllers
         [HttpPost]
         [Route("AddByExcelQuestions")]
         [Consumes("multipart/form-data")]
-        [ProducesResponseType(typeof(bool), 200)]
+        [ProducesResponseType(typeof(Result<bool>), 200)]
         public async Task<IActionResult> AddByExcelQuestions([FromForm] AddByExcelQuestionsDto addBy)
         {
             if (addBy.File == null)
@@ -68,14 +67,14 @@ namespace Elm.API.Controllers
         // PUT: api/Question
         [HttpPut]
         [Route("UpdateQuestion")]
-        [ProducesResponseType(typeof(QuestionsDto), 200)]
+        [ProducesResponseType(typeof(Result<QuestionsDto>), 200)]
         public async Task<IActionResult> UpdateQuestion([FromBody] UpdateQuestionCommand command)
             => HandleResult(await mediator.Send(command));
 
         // DELETE: api/Question/Id
         [HttpDelete]
         [Route("{questionId:int}")]
-        [ProducesResponseType(typeof(bool), 200)]
+        [ProducesResponseType(typeof(Result<bool>), 200)]
         public async Task<IActionResult> DeleteQuestion([FromRoute] int questionId)
             => HandleResult(await mediator.Send(new DeleteQuestionCommand(questionId)));
 

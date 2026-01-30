@@ -16,11 +16,21 @@ namespace Elm.Infrastructure.Repositories
         public async Task<List<GetYearDto>> GetAllYearInCollegeAsync(int collegeId)
         {
             return await context.Years
+                .AsNoTracking()
                 .Where(y => y.CollegeId == collegeId)
                 .Select(y => new GetYearDto
                 { Id = y.Id, Name = y.Name })
-                .AsNoTracking()
                 .ToListAsync();
+        }
+
+        public async Task<GetYearDto> GetYearByIdAsync(int yearId)
+        {
+            return await context.Years
+                .AsNoTracking()
+                .Where(y => y.Id == yearId)
+                .Select(y => new GetYearDto
+                { Id = y.Id, Name = y.Name })
+                .FirstOrDefaultAsync() ?? new GetYearDto();
         }
     }
 }

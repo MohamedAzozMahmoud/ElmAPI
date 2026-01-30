@@ -1,14 +1,13 @@
-﻿using Elm.Application.Contracts.Features.Year.Commands;
+﻿using Elm.Application.Contracts;
+using Elm.Application.Contracts.Features.Year.Commands;
 using Elm.Application.Contracts.Features.Year.DTOs;
 using MediatR;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.RateLimiting;
 
 namespace Elm.API.Controllers
 {
-    [Authorize("Admin")]
-    [EnableRateLimiting("UserRolePolicy")]
+    //    [Authorize("Admin")]
+    //    [EnableRateLimiting("UserRolePolicy")]
     [Route("api/admin/[controller]")]
     [ApiController]
     public class YearAdminController : ApiBaseController
@@ -35,7 +34,7 @@ namespace Elm.API.Controllers
         // DELETE api/<YearAdminController>/Id
         [HttpDelete]
         [Route("DeleteYear/{yearId:int}")]
-        [ProducesResponseType(typeof(bool), 200)]
+        [ProducesResponseType(typeof(Result<bool>), 200)]
         public async Task<IActionResult> Delete([FromRoute] int yearId)
             => HandleResult(await mediator.Send(new DeleteYearCommand(yearId)));
 

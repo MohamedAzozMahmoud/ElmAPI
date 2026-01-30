@@ -16,6 +16,7 @@ namespace Elm.Infrastructure.Repositories
         public async Task<List<GetCollegeDto>> GetAllCollegeInUniversityAsync(int universityId)
         {
             return await context.Colleges
+                .AsNoTracking()
                 .Where(c => c.UniversityId == universityId)
                 .Select(c => new GetCollegeDto
                 {
@@ -23,8 +24,20 @@ namespace Elm.Infrastructure.Repositories
                     Name = c.Name,
                     ImagName = c.Img.StorageName
                 })
-                .AsNoTracking()
                 .ToListAsync();
+        }
+
+        public async Task<CollegeDto> GetCollegeByIdAsync(int Id)
+        {
+            return await context.Colleges
+                .AsNoTracking()
+                .Where(c => c.Id == Id)
+                .Select(c => new CollegeDto
+                {
+                    Id = c.Id,
+                    Name = c.Name
+                })
+                .FirstOrDefaultAsync();
         }
     }
 }

@@ -76,6 +76,7 @@ namespace Elm.Infrastructure.Repositories
         public async Task<Result<List<QuestionsDto>>> GetQuestionsByBankId(int questionsBankId)
         {
             var questions = await context.Questions
+                .AsNoTracking()
                 .Where(q => q.QuestionBankId == questionsBankId)
                 .Include(q => q.Options)
                 .Select(q => new QuestionsDto
@@ -90,13 +91,13 @@ namespace Elm.Infrastructure.Repositories
                         IsCorrect = o.IsCorrect
                     }).ToList()
                 })
-                .AsNoTracking()
                 .ToListAsync();
             return Result<List<QuestionsDto>>.Success(questions);
         }
         public async Task<Result<QuestionsDto>> GetQuestionById(int questionId)
         {
             var question = await context.Questions
+                .AsNoTracking()
                 .Where(q => q.Id == questionId)
                 .Include(q => q.Options)
                 .Select(q => new QuestionsDto
@@ -111,7 +112,6 @@ namespace Elm.Infrastructure.Repositories
                         IsCorrect = o.IsCorrect
                     }).ToList()
                 })
-                .AsNoTracking()
                 .FirstOrDefaultAsync();
             return Result<QuestionsDto>.Success(question);
         }

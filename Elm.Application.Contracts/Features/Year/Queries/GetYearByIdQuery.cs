@@ -3,5 +3,5 @@ using MediatR;
 
 namespace Elm.Application.Contracts.Features.Year.Queries
 {
-    public record GetYearByIdQuery(int Id) : IRequest<Result<YearDto>>;
+    public record GetYearByIdQuery(int Id) : IRequest<Result<GetYearDto>>;
 }

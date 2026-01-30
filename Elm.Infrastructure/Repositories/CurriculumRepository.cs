@@ -13,31 +13,29 @@ namespace Elm.Infrastructure.Repositories
             context = _context;
         }
 
-        public async Task<bool> ExistsByNameAsync(string name)
-        {
-            var exists = await context.Curriculums.AnyAsync(x => x.Subject.Name == name);
-            return exists;
-        }
-
         public async Task<List<GetCurriculumDto>> GetAllCurriculumsByDeptIdAndYearIdAsync(int departmentId, int yearId)
         {
             return await context.Curriculums
+                .AsNoTracking()
                 .Where(c => c.DepartmentId == departmentId && c.YearId == yearId)
                 .Select(c => new GetCurriculumDto
                 {
                     Id = c.Id,
                     SubjectName = c.Subject.Name
                 })
-                .AsNoTracking()
                 .ToListAsync();
         }
 
-        public async Task<List<string>> GetFileInfoByIdAsync(int curriculumId)
+        public async Task<List<GetCurriculumDto>> GetByDoctorIdAsync(int doctorId)
         {
-            return await context.Files
-                .Where(f => f.CurriculumId == curriculumId)
-                .Select(f => f.StorageName)
+            return await context.Curriculums
                 .AsNoTracking()
+                .Where(c => c.DoctorId == doctorId)
+                .Select(c => new GetCurriculumDto
+                {
+                    Id = c.Id,
+                    SubjectName = c.Subject.Name
+                })
                 .ToListAsync();
         }
     }

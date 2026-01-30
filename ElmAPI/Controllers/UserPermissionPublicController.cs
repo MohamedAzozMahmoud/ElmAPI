@@ -1,14 +1,13 @@
-﻿using Elm.Application.Contracts.Features.Permissions.DTOs;
+﻿using Elm.Application.Contracts;
+using Elm.Application.Contracts.Features.Permissions.DTOs;
 using Elm.Application.Contracts.Features.Permissions.Queries;
 using MediatR;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.RateLimiting;
 
 namespace Elm.API.Controllers
 {
-    [Authorize]
-    [EnableRateLimiting("UserRolePolicy")]
+    //[Authorize]
+    //[EnableRateLimiting("UserRolePolicy")]
     [Route("api/[controller]")]
     [ApiController]
     public class UserPermissionPublicController : ApiBaseController
@@ -22,7 +21,7 @@ namespace Elm.API.Controllers
         // api/UserPermission/GetPermissionsByUserId
         [HttpGet]
         [Route("GetPermissionsByUserId/{userId}")]
-        [ProducesResponseType(typeof(IEnumerable<GetPermissionsDto>), 200)]
+        [ProducesResponseType(typeof(Result<IEnumerable<GetPermissionsDto>>), 200)]
         public async Task<IActionResult> GetPermissionsByUserId([FromRoute] string userId)
             => HandleResult(await _mediator.Send(new GetAllUserPermissionsQuery(userId)));
 

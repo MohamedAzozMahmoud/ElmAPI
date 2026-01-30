@@ -33,12 +33,12 @@ namespace Elm.Infrastructure.Repositories
 
         public async Task<T> FindAsync(Expression<Func<T, bool>> predicate)
         {
-            return await _dbSet.FirstOrDefaultAsync(predicate);
+            return await _dbSet.AsNoTracking().FirstOrDefaultAsync(predicate);
         }
 
         public async Task<List<T>> GetAllAsync()
         {
-            var entities = await _dbSet.ToListAsync();
+            var entities = await _dbSet.AsNoTracking().ToListAsync();
             return entities;
         }
 

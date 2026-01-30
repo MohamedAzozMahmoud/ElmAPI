@@ -1,4 +1,5 @@
-﻿using Elm.Application.Contracts.Features.University.DTOs;
+﻿using Elm.Application.Contracts;
+using Elm.Application.Contracts.Features.University.DTOs;
 using Elm.Application.Contracts.Features.University.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -20,7 +21,7 @@ namespace Elm.API.Controllers
         // GET: api/University/{name}
         [HttpGet]
         [Route("GetUniversityByName/{name}")]
-        [ProducesResponseType(typeof(UniversityDetialsDto), 200)]
+        [ProducesResponseType(typeof(Result<UniversityDetialsDto>), 200)]
         public async Task<IActionResult> Get([FromRoute] string name)
             => HandleResult(await mediator.Send(new GetUniversityByNameQuery(name)));
     }

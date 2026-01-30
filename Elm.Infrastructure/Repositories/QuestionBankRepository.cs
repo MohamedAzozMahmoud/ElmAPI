@@ -18,12 +18,12 @@ namespace Elm.Infrastructure.Repositories
         {
             var questionsBanks = await context.QuestionsBanks
                 .Where(qb => qb.CurriculumId == curriculumId)
+                .AsNoTracking()
                 .Select(qb => new QuestionsBankDto
                 {
                     Id = qb.Id,
                     name = qb.Name
                 })
-                .AsNoTracking()
                 .ToListAsync();
             return Result<List<QuestionsBankDto>>.Success(questionsBanks);
         }

@@ -1,12 +1,12 @@
-﻿using Elm.Application.Contracts.Features.Files.DTOs;
+﻿using Elm.Application.Contracts;
+using Elm.Application.Contracts.Features.Files.DTOs;
 using Elm.Application.Contracts.Features.Files.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.RateLimiting;
 
 namespace Elm.API.Controllers
 {
-    [EnableRateLimiting("UserRolePolicy")]
+    //[EnableRateLimiting("UserRolePolicy")]
     [Route("api/[controller]")]
     [ApiController]
     public class FilePublicController : ApiBaseController
@@ -26,7 +26,7 @@ namespace Elm.API.Controllers
             var result = await mediator.Send(new DownloadFileCommand(fileName));
             if (!result.IsSuccess || result.Data == null) return HandleResult(result);
 
-            return File(result.Data.Content, result.Data.ContentType, result.Data.ContentType);
+            return File(result.Data.Content, result.Data.ContentType, result.Data.FileName);
         }
 
         // GET: api/File/ShowFileFromUrl/{fileName}
@@ -44,7 +44,7 @@ namespace Elm.API.Controllers
         // GET: api/File/GetAllFilesByCurriculumId/{curriculumId} 
         [HttpGet]
         [Route("GetAllFilesByCurriculumId/{curriculumId:int}")]
-        [ProducesResponseType(typeof(List<FileView>), 200)]
+        [ProducesResponseType(typeof(Result<List<FileView>>), 200)]
         public async Task<IActionResult> GetAllFilesByCurriculumId([FromRoute] int curriculumId)
             => HandleResult(await mediator.Send(new GetAllFilesByCurriculumIdQuery(curriculumId)));
 

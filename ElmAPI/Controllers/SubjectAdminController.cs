@@ -1,14 +1,13 @@
-﻿using Elm.Application.Contracts.Features.Subject.Commands;
+﻿using Elm.Application.Contracts;
+using Elm.Application.Contracts.Features.Subject.Commands;
 using Elm.Application.Contracts.Features.Subject.DTOs;
 using MediatR;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.RateLimiting;
 
 namespace Elm.API.Controllers
 {
-    [Authorize("Admin")]
-    [EnableRateLimiting("UserRolePolicy")]
+    //[Authorize("Admin")]
+    //[EnableRateLimiting("UserRolePolicy")]
     [Route("api/admin/[controller]")]
     [ApiController]
     public class SubjectAdminController : ApiBaseController
@@ -21,21 +20,21 @@ namespace Elm.API.Controllers
         // POST: api/Subject
         [HttpPost]
         [Route("AddSubject")]
-        [ProducesResponseType(typeof(SubjectDto), 200)]
+        [ProducesResponseType(typeof(Result<SubjectDto>), 200)]
         public async Task<IActionResult> AddSubject([FromBody] AddSubjectCommand command)
                  => HandleResult(await mediator.Send(command));
 
         // PUT: api/Subject
         [HttpPut]
         [Route("UpdateSubject")]
-        [ProducesResponseType(typeof(SubjectDto), 200)]
+        [ProducesResponseType(typeof(Result<SubjectDto>), 200)]
         public async Task<IActionResult> UpdateSubject([FromBody] UpdateSubjectCommand command)
                  => HandleResult(await mediator.Send(command));
 
         // DELETE: api/Subject/Id
         [HttpDelete]
         [Route("DeleteSubject/{id:int}")]
-        [ProducesResponseType(typeof(bool), 200)]
+        [ProducesResponseType(typeof(Result<bool>), 200)]
         public async Task<IActionResult> DeleteSubject([FromRoute] int id)
                  => HandleResult(await mediator.Send(new DeleteSubjectCommand(id)));
 

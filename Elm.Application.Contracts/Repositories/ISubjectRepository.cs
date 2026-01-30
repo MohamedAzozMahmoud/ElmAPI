@@ -7,6 +7,6 @@ namespace Elm.Application.Contracts.Repositories
     {
         public Task<List<GetSubjectDto>> GetAllSubjectByDepartmentIdAsync(int departmentId);
         // ExistsByNameAsync
-        public Task<Result<bool>> ExistsByNameAsync(string name);
+        //public Task<Result<bool>> ExistsByNameAsync(string name);
     }
 }

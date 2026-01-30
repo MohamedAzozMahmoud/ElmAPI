@@ -1,5 +1,4 @@
-﻿using Elm.Application.Contracts;
-using Elm.Application.Contracts.Features.Subject.DTOs;
+﻿using Elm.Application.Contracts.Features.Subject.DTOs;
 using Elm.Application.Contracts.Repositories;
 using Elm.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -14,15 +13,16 @@ namespace Elm.Infrastructure.Repositories
             context = _context;
         }
 
-        public async Task<Result<bool>> ExistsByNameAsync(string name)
-        {
-            var exists = await context.Subjects.AnyAsync(x => x.Name == name);
-            return Result<bool>.Success(exists);
-        }
+        //public async Task<Result<bool>> ExistsByNameAsync(string name)
+        //{
+        //    var exists = await context.Subjects.AnyAsync(x => x.Name == name);
+        //    return Result<bool>.Success(exists);
+        //}
 
         public async Task<List<GetSubjectDto>> GetAllSubjectByDepartmentIdAsync(int departmentId)
         {
             return await context.Subjects
+                .AsNoTracking()
                 .Where(s => s.Curriculums.Select(c => c.DepartmentId).Contains(departmentId))
                 .Select(s => new GetSubjectDto
                 {
@@ -30,7 +30,6 @@ namespace Elm.Infrastructure.Repositories
                     Name = s.Name,
                     Code = s.Code
                 })
-                .AsNoTracking()
                 .ToListAsync();
         }
     }
