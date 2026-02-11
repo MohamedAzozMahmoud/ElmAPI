@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.RateLimiting;
 
 namespace Elm.API.Controllers
 {
-    //[EnableRateLimiting("UserRolePolicy")]
+    [EnableRateLimiting("UserRolePolicy")]
     [Route("api/[controller]")]
     [ApiController]
     public class QuestionsBankPublicController : ApiBaseController

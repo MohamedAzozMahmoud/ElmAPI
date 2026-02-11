@@ -1,7 +1,6 @@
-﻿using Elm.Application.Contracts.Features.QuestionsBank.DTOs;
-using MediatR;
+﻿using MediatR;
 
 namespace Elm.Application.Contracts.Features.QuestionsBank.Commands
 {
-    public record UpdateQuestionsBankCommand(int id, string name, int curriculumId) : IRequest<Result<QuestionsBankDto>>;
+    public record UpdateQuestionsBankCommand(int id, string name, int curriculumId) : IRequest<Result<bool>>;
 }

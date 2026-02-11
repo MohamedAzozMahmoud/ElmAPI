@@ -1,5 +1,4 @@
-﻿using AutoMapper;
-using Elm.Application.Contracts;
+﻿using Elm.Application.Contracts;
 using Elm.Application.Contracts.Features.College.DTOs;
 using Elm.Application.Contracts.Features.College.Queries;
 using Elm.Application.Contracts.Repositories;
@@ -10,11 +9,9 @@ namespace Elm.Application.Features.College.Handlers
     public sealed class GetCollegeByIdHandler : IRequestHandler<GetCollegeByIdQuery, Result<CollegeDto>>
     {
         private readonly ICollegeRepository _collegeRepository;
-        private readonly IMapper _mapper;
-        public GetCollegeByIdHandler(ICollegeRepository collegeRepository, IMapper mapper)
+        public GetCollegeByIdHandler(ICollegeRepository collegeRepository)
         {
             _collegeRepository = collegeRepository;
-            _mapper = mapper;
         }
         public async Task<Result<CollegeDto>> Handle(GetCollegeByIdQuery request, CancellationToken cancellationToken)
         {

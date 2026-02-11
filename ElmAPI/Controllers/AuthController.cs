@@ -1,17 +1,16 @@
 ﻿using Elm.Application.Contracts;
 using Elm.Application.Contracts.Features.Authentication.Commands;
 using Elm.Application.Contracts.Features.Authentication.DTOs;
-using Elm.Application.Contracts.Features.Authentication.Queries;
 using Elm.Domain.Entities;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 
 namespace Elm.API.Controllers
 {
-    //[Authorize]
-    //[EnableRateLimiting("LoginPolicy")]
+
     [Route("api/[controller]")]
     [ApiController]
     public class AuthController : ApiBaseController
@@ -26,37 +25,10 @@ namespace Elm.API.Controllers
             _mediator = mediator;
             this.signInManager = signInManager;
         }
-        /// <summary>
-        /// Registers a new admin user using the provided registration command.
-        /// </summary>
-        /// <param name="command">The registration details for the new admin user.</param>
-        /// <returns>An IActionResult indicating the result of the registration operation.</returns>
-        // POST: api/Auth/RegisterAdmin
-        //[Authorize(Roles = "Admin")]
-        [HttpPost]
-        [Route("RegisterAdmin")]
-        [ProducesResponseType(typeof(Result<bool>), 200)]
-        public async Task<IActionResult> RegisterAdmin([FromBody] RegisterCommand command) =>
-            HandleResult(await _mediator.Send(command));
 
-        // POST: api/Auth/RegisterStudent
-        //[Authorize(Roles = "Admin")]
-        [HttpPost]
-        [Route("RegisterStudent")]
-        [ProducesResponseType(typeof(Result<bool>), 200)]
-        public async Task<IActionResult> RegisterStudent([FromBody] RegisterStudentCommand command) =>
-            HandleResult(await _mediator.Send(command));
-
-        // POST: api/Auth/RegisterDoctor
-        //[Authorize(Roles = "Admin")]
-        [HttpPost]
-        [Route("RegisterDoctor")]
-        [ProducesResponseType(typeof(Result<bool>), 200)]
-        public async Task<IActionResult> RegisterDoctor([FromBody] RegisterDoctorCommand command) =>
-            HandleResult(await _mediator.Send(command));
 
         // POST: api/Auth/Login
-        //[AllowAnonymous]
+        [AllowAnonymous]
         [HttpPost]
         [Route("Login")]
         [EnableRateLimiting("LoginPolicy")]
@@ -76,6 +48,7 @@ namespace Elm.API.Controllers
         }
 
         // POST: api/Auth/ChangePassword
+        [Authorize]
         [HttpPost]
         [Route("ChangePassword")]
         [ProducesResponseType(typeof(Result<bool>), 200)]
@@ -98,7 +71,7 @@ namespace Elm.API.Controllers
         {
             var origin = Request.Headers["Origin"].ToString();
 
-            if (string.IsNullOrEmpty(origin) || IsTrustedDomain(origin))
+            if (string.IsNullOrEmpty(origin) || !IsTrustedDomain(origin))
             {
                 return Forbid("خطأ في الطلب");
             }
@@ -146,7 +119,7 @@ namespace Elm.API.Controllers
         //[DisableRateLimiting]
         [HttpPost]
         [Route("Logout")]
-        //[Authorize]
+        [Authorize]
         public async Task<IActionResult> Logout()
         {
             await signInManager.SignOutAsync();
@@ -163,20 +136,6 @@ namespace Elm.API.Controllers
             // 5. إرجاع استجابة نجاح (حتى لو لم يكن هناك توكن للحذف)
             return NoContent();
         }
-
-        // DELETE: api/Auth/Delete
-        //[Authorize(Roles = "Admin")]
-        [HttpDelete]
-        [Route("Delete")]
-        [ProducesResponseType(typeof(Result<bool>), 200)]
-        public async Task<IActionResult> Delete([FromBody] DeleteCommand command)
-            => HandleResult(await _mediator.Send(command));
-
-        [HttpGet]
-        [Route("GetAllUsers/{role:alpha}")]
-        [ProducesResponseType(typeof(Result<IEnumerable<UserDto>>), 200)]
-        public async Task<IActionResult> GetAllUsers([FromRoute] string role)
-        => HandleResult(await _mediator.Send(new GetAllUsersQuery(role)));
 
 
         #region Private Methods

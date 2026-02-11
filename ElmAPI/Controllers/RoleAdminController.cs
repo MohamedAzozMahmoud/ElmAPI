@@ -3,12 +3,14 @@ using Elm.Application.Contracts.Features.Roles.Commands;
 using Elm.Application.Contracts.Features.Roles.DTOs;
 using Elm.Application.Contracts.Features.Roles.Queries;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Elm.API.Controllers
 {
-    //[Authorize("Admin")]
-    //[EnableRateLimiting("UserRolePolicy")]
+    [Authorize(Roles = "Admin")]
+    [EnableRateLimiting("UserRolePolicy")]
     [Route("api/admin/[controller]")]
     [ApiController]
     public class RoleAdminController : ApiBaseController

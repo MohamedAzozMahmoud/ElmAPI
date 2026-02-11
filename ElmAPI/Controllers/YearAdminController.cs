@@ -2,11 +2,12 @@
 using Elm.Application.Contracts.Features.Year.Commands;
 using Elm.Application.Contracts.Features.Year.DTOs;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Elm.API.Controllers
 {
-    //    [Authorize("Admin")]
+    [Authorize(Roles = "Admin")]
     //    [EnableRateLimiting("UserRolePolicy")]
     [Route("api/admin/[controller]")]
     [ApiController]
@@ -20,14 +21,14 @@ namespace Elm.API.Controllers
         // POST api/<YearAdminController>
         [HttpPost]
         [Route("AddYear")]
-        [ProducesResponseType(typeof(YearDto), 200)]
+        [ProducesResponseType(typeof(Result<YearDto>), 200)]
         public async Task<IActionResult> Post([FromBody] AddYearCommand command)
             => HandleResult(await mediator.Send(command));
 
         // PUT api/<YearAdminController>/Id
         [HttpPut]
         [Route("UpdateYear")]
-        [ProducesResponseType(typeof(YearDto), 200)]
+        [ProducesResponseType(typeof(Result<bool>), 200)]
         public async Task<IActionResult> Put([FromBody] UpdateYearCommand command)
             => HandleResult(await mediator.Send(command));
 

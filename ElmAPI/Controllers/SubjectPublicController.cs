@@ -3,10 +3,11 @@ using Elm.Application.Contracts.Features.Subject.DTOs;
 using Elm.Application.Contracts.Features.Subject.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Elm.API.Controllers
 {
-    //[EnableRateLimiting("UserRolePolicy")]
+    [EnableRateLimiting("UserRolePolicy")]
     [Route("api/[controller]")]
     [ApiController]
     public class SubjectPublicController : ApiBaseController
@@ -23,7 +24,7 @@ namespace Elm.API.Controllers
         [Route("GetAllSubjects/{departmentId:int}")]
         [ProducesResponseType(typeof(Result<List<GetSubjectDto>>), 200)]
         public async Task<IActionResult> GetAllSubjects([FromRoute] int departmentId)
-                 => HandleResult(await mediator.Send(new GetAllSubjectQuery(departmentId)));
+                 => HandleResult(await mediator.Send(new GetAllSubjectByDepartmentIdQuery(departmentId)));
 
         // Get: api/Subject/Id
         [HttpGet]

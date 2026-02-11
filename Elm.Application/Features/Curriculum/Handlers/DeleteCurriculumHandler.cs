@@ -22,11 +22,10 @@ namespace Elm.Application.Features.QuestionsBank.Handlers
             {
                 return Result<bool>.Failure("Curriculum not found", 404);
             }
-
-            var resultDelete = await fileStorage.DeleteAllFilesByCurriculumId(request.Id, "Files");
-            if (!resultDelete.IsSuccess)
+            var resultDelete = await fileStorage.DeleteAllFilesByCurriculumId(request.Id);
+            if (!resultDelete.IsSuccess && resultDelete.StatusCode != 404)
             {
-                return Result<bool>.Failure("Failed to delete associated files.");
+                return Result<bool>.Failure("Failed to delete associated files.", 500);
             }
             await repository.DeleteAsync(request.Id);
             return Result<bool>.Success(true);

@@ -1,12 +1,14 @@
 ﻿using Elm.Application.Contracts;
 using Elm.Application.Contracts.Features.Subject.Commands;
 using Elm.Application.Contracts.Features.Subject.DTOs;
+using Elm.Application.Contracts.Features.Subject.Queries;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Elm.API.Controllers
 {
-    //[Authorize("Admin")]
+    [Authorize(Roles = "Admin")]
     //[EnableRateLimiting("UserRolePolicy")]
     [Route("api/admin/[controller]")]
     [ApiController]
@@ -17,6 +19,13 @@ namespace Elm.API.Controllers
         {
             mediator = _mediator;
         }
+        // GET: api/GetAllSubjects
+        [HttpGet]
+        [Route("GetAllSubjects")]
+        [ProducesResponseType(typeof(Result<List<GetSubjectDto>>), 200)]
+        public async Task<IActionResult> GetAllSubjects([FromQuery] int pageSize = 10, [FromQuery] int pageNumber = 1)
+            => HandleResult(await mediator.Send(new GetAllSubjectsQuery(pageSize, pageNumber)));
+
         // POST: api/Subject
         [HttpPost]
         [Route("AddSubject")]
@@ -27,7 +36,7 @@ namespace Elm.API.Controllers
         // PUT: api/Subject
         [HttpPut]
         [Route("UpdateSubject")]
-        [ProducesResponseType(typeof(Result<SubjectDto>), 200)]
+        [ProducesResponseType(typeof(Result<bool>), 200)]
         public async Task<IActionResult> UpdateSubject([FromBody] UpdateSubjectCommand command)
                  => HandleResult(await mediator.Send(command));
 

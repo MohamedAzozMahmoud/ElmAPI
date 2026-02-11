@@ -7,14 +7,14 @@ using Microsoft.AspNetCore.Identity;
 
 namespace Elm.Application.Features.Authentication.Handlers
 {
-    public sealed class RegisterStudentHandler : IRequestHandler<RegisterStudentCommand, Result<bool>>
+    public sealed class RegisterStudentHandler : IRequestHandler<RegisterLeaderCommand, Result<bool>>
     {
         private readonly UserManager<AppUser> userManager;
         public RegisterStudentHandler(UserManager<AppUser> userManager)
         {
             this.userManager = userManager;
         }
-        public async Task<Result<bool>> Handle(RegisterStudentCommand request, CancellationToken cancellationToken)
+        public async Task<Result<bool>> Handle(RegisterLeaderCommand request, CancellationToken cancellationToken)
         {
             var Found = await userManager.FindByNameAsync(request.UserName);
             if (Found != null)
@@ -33,7 +33,7 @@ namespace Elm.Application.Features.Authentication.Handlers
             var result = await userManager.CreateAsync(user, request.Password);
             if (!result.Succeeded)
                 return Result<bool>.Failure("فشل في إنشاء المستخدم");
-            await userManager.AddToRoleAsync(user, UserRoles.Student);
+            await userManager.AddToRoleAsync(user, UserRoles.Leader);
             return Result<bool>.Success(true);
         }
     }

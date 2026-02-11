@@ -3,11 +3,12 @@ using Elm.Application.Contracts.Features.Permissions.Commands;
 using Elm.Application.Contracts.Features.Permissions.DTOs;
 using Elm.Application.Contracts.Features.Permissions.Queries;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Elm.API.Controllers
 {
-    //[Authorize("Admin")]
+    [Authorize(Roles = "Admin")]
     //[EnableRateLimiting("UserRolePolicy")]
     [Route("api/admin/[controller]")]
     [ApiController]
@@ -27,7 +28,7 @@ namespace Elm.API.Controllers
 
         [HttpPut]
         [Route("UpdatePermission")]
-        [ProducesResponseType(typeof(Result<PermissionDto>), 200)]
+        [ProducesResponseType(typeof(Result<bool>), 200)]
         public async Task<IActionResult> UpdatePermission([FromBody] UpdatePermissionCommand command) =>
             HandleResult(await mediator.Send(command));
 

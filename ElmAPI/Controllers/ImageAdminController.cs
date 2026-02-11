@@ -3,11 +3,10 @@ using Elm.Application.Contracts.Features.Images.Commands;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.RateLimiting;
 
 namespace Elm.API.Controllers
 {
-    //[Authorize("Admin")]
+    [Authorize(Roles = "Admin")]
     //[EnableRateLimiting("UserRolePolicy")]
     [Route("api/admin/[controller]")]
     [ApiController]
@@ -37,16 +36,11 @@ namespace Elm.API.Controllers
 
         // DELETE: api/Image
         [HttpDelete]
-        [Route("DeleteCollegeImage")]
+        [Route("DeleteImage/{fileName}")]
         [ProducesResponseType(typeof(Result<bool>), 200)]
-        public async Task<IActionResult> DeleteCollegeImage([FromQuery] DeleteCollegeImageCommand command)
-        => HandleResult(await mediator.Send(command));
+        public async Task<IActionResult> DeleteImage([FromRoute] string fileName)
+            => HandleResult(await mediator.Send(new DeleteImageByNameCommand(fileName)));
 
-        // DELETE: api/Image
-        [HttpDelete]
-        [Route("DeleteUniversityImage")]
-        [ProducesResponseType(typeof(Result<bool>), 200)]
-        public async Task<IActionResult> DeleteUniversityImage([FromQuery] DeleteUniversityImageCommand command)
-            => HandleResult(await mediator.Send(command));
+
     }
 }

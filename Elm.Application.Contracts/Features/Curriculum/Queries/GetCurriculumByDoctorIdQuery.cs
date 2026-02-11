@@ -3,5 +3,5 @@ using MediatR;
 
 namespace Elm.Application.Contracts.Features.Curriculum.Queries
 {
-    public record GetCurriculumByDoctorIdQuery(int doctorId) : IRequest<Result<List<GetCurriculumDto>>>;
+    public record GetCurriculumByDoctorIdQuery(string UserId) : IRequest<Result<List<GetCurriculumDto>>>;
 }

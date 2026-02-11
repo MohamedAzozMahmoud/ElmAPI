@@ -18,11 +18,11 @@ namespace Elm.API.Controllers
             mediator = _mediator;
         }
 
-        // GET: api/University/{name}
+        // GET: api/University
         [HttpGet]
-        [Route("GetUniversityByName/{name}")]
+        [Route("GetUniversit")]
         [ProducesResponseType(typeof(Result<UniversityDetialsDto>), 200)]
-        public async Task<IActionResult> Get([FromRoute] string name)
-            => HandleResult(await mediator.Send(new GetUniversityByNameQuery(name)));
+        public async Task<IActionResult> Get()
+            => HandleResult(await mediator.Send(new GetUniversityQuery()));
     }
 }

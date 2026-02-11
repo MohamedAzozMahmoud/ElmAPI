@@ -1,5 +1,4 @@
-﻿using AutoMapper;
-using Elm.Application.Contracts;
+﻿using Elm.Application.Contracts;
 using Elm.Application.Contracts.Features.QuestionsBank.DTOs;
 using Elm.Application.Contracts.Features.QuestionsBank.Queries;
 using Elm.Application.Contracts.Repositories;
@@ -10,11 +9,9 @@ namespace Elm.Application.Features.QuestionsBank.Handlers
     public sealed class GetAllQuestionsBanksHandler : IRequestHandler<GetAllQuestionsBankQuery, Result<List<QuestionsBankDto>>>
     {
         private readonly IQuestionBankRepository repository;
-        private readonly IMapper mapper;
-        public GetAllQuestionsBanksHandler(IQuestionBankRepository repository, IMapper mapper)
+        public GetAllQuestionsBanksHandler(IQuestionBankRepository repository)
         {
             this.repository = repository;
-            this.mapper = mapper;
         }
         public async Task<Result<List<QuestionsBankDto>>> Handle(GetAllQuestionsBankQuery request, CancellationToken cancellationToken)
         {

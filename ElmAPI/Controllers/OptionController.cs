@@ -2,12 +2,14 @@
 using Elm.Application.Contracts.Features.Options.Commands;
 using Elm.Application.Contracts.Features.Options.DTOs;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Elm.API.Controllers
 {
-    //[Authorize]
-    //[EnableRateLimiting("UserRolePolicy")]
+    [Authorize(Roles = "Leader")]
+    [EnableRateLimiting("UserRolePolicy")]
     [Route("api/[controller]")]
     [ApiController]
     public class OptionController : ApiBaseController
@@ -29,7 +31,7 @@ namespace Elm.API.Controllers
         // PUT: api/Option
         [HttpPut]
         [Route("UpdateOption")]
-        [ProducesResponseType(typeof(Result<OptionsDto>), 200)]
+        [ProducesResponseType(typeof(Result<bool>), 200)]
         public async Task<IActionResult> Put([FromBody] UpdateOptionCommand command)
             => HandleResult(await mediator.Send(command));
 

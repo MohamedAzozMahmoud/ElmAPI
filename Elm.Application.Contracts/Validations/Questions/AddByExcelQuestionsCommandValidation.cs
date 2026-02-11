@@ -8,11 +8,11 @@ namespace Elm.Application.Contracts.Validations.Questions
         public AddByExcelQuestionsCommandValidation()
         {
             RuleFor(x => x.questionBankId)
-                .GreaterThan(0).WithMessage("Question Bank Id must be greater than zero.");
+                .GreaterThan(0).WithMessage("معرف بنك الأسئلة يجب أن يكون أكبر من صفر.");
             RuleFor(x => x.ExcelFile)
-                .NotNull().WithMessage("Excel file must be provided.")
-                .Must(file => file.Length > 0).WithMessage("Excel file cannot be empty.")
-                .Must(f => f.Length < 10485760).WithMessage("Excel file must be less than 10 MB.");
+                .NotNull().WithMessage("يجب توفير ملف Excel.")
+                .Must(file => file.Length > 0).WithMessage("ملف Excel لا يمكن أن يكون فارغًا.")
+                .Must(f => f.Length < 3 * 1024 * 1024).WithMessage("يجب أن يكون حجم ملف Excel أقل من 3 ميغابايت.");
         }
     }
 }

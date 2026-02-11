@@ -3,11 +3,12 @@ using Elm.Application.Contracts.Features.Files.Commands;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Elm.API.Controllers
 {
     //[Authorize]
-    //[EnableRateLimiting("UserRolePolicy")]
+    [EnableRateLimiting("UserRolePolicy")]
     [Route("api/private/[controller]")]
     [ApiController]
     public class FilePrivateController : ApiBaseController
@@ -19,7 +20,7 @@ namespace Elm.API.Controllers
             mediator = _mediator;
         }
         // POST: api/File
-        //[Authorize(Roles = "Leader")]
+        [Authorize(Roles = "Leader")]
         [HttpPost]
         [Route("UploadFile")]
         [Consumes("multipart/form-data")]

@@ -3,7 +3,7 @@ using FluentValidation;
 
 namespace Elm.Application.Contracts.Validations.Subject
 {
-    public sealed class GetAllSubjectQueryValidation : AbstractValidator<GetAllSubjectQuery>
+    public sealed class GetAllSubjectQueryValidation : AbstractValidator<GetAllSubjectByDepartmentIdQuery>
     {
         public GetAllSubjectQueryValidation()
         {

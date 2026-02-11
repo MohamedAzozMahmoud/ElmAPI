@@ -3,10 +3,11 @@ using Elm.Application.Contracts.Features.Curriculum.DTOs;
 using Elm.Application.Contracts.Features.Curriculum.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Elm.API.Controllers
 {
-    //[EnableRateLimiting("UserRolePolicy")]
+    [EnableRateLimiting("UserRolePolicy")]
     [Route("api/[controller]")]
     [ApiController]
     public class CurriulumPublicController : ApiBaseController
@@ -20,7 +21,6 @@ namespace Elm.API.Controllers
 
 
         // Get: api/CurriculumControllers
-        //GetAllCurriculumsByDeptIdAndYearIdAsync
         [HttpGet]
         [Route("GetAllByDeptIdAndYearId/{departmentId:int}")]
         [ProducesResponseType(typeof(Result<List<GetCurriculumDto>>), 200)]
@@ -36,10 +36,17 @@ namespace Elm.API.Controllers
 
         // Get: api/CurriculumControllers/ByDoctorId/{doctorId}
         [HttpGet]
-        [Route("ByDoctorId/{doctorId:int}")]
+        [Route("ByDoctorId/{UserId}")]
         [ProducesResponseType(typeof(Result<List<GetCurriculumDto>>), 200)]
-        public async Task<IActionResult> GetByDoctorIdAsync([FromRoute] int doctorId)
-            => HandleResult(await mediator.Send(new GetCurriculumByDoctorIdQuery(doctorId)));
+        public async Task<IActionResult> GetByDoctorIdAsync([FromRoute] string UserId)
+            => HandleResult(await mediator.Send(new GetCurriculumByDoctorIdQuery(UserId)));
+
+        // Get: api/CurriculumControllers/ByStudentId/{studentId}
+        [HttpGet]
+        [Route("ByStudentId/{UserId}")]
+        [ProducesResponseType(typeof(Result<List<GetCurriculumDto>>), 200)]
+        public async Task<IActionResult> GetByStudentIdAsync([FromRoute] string UserId)
+            => HandleResult(await mediator.Send(new GetCurriculumByStudentIdQuery(UserId)));
 
 
     }

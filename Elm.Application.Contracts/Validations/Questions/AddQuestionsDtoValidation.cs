@@ -8,12 +8,12 @@ namespace Elm.Application.Contracts.Validations.Questions
         public AddQuestionsDtoValidation()
         {
             RuleFor(x => x.Content)
-                 .NotEmpty().WithMessage("Question content must not be empty.")
-                 .MaximumLength(1000).WithMessage("Question content must not exceed 1000 characters.");
+                 .NotEmpty().WithMessage("محتوى السؤال مطلوب.")
+                 .MaximumLength(500).WithMessage("محتوى السؤال لا يجب أن يتجاوز 500 حرف.");
             RuleFor(x => x.QuestionType)
-                .NotEmpty().WithMessage("Question type must not be empty.")
-                .Must(type => new[] { "MultipleChoice", "TrueFalse", "ShortAnswer" }.Contains(type))
-                .WithMessage("Question type must be one of the following: MultipleChoice, TrueFalse, ShortAnswer.");
+                .NotEmpty().WithMessage("نوع السؤال مطلوب.")
+                .Must(type => new[] { "MCQ", "TrueFalse" }.Contains(type))
+                .WithMessage("نوع السؤال يجب أن يكون إما MCQ أو TrueFalse.");
         }
     }
 }

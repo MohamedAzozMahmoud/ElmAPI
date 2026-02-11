@@ -8,10 +8,10 @@ namespace Elm.Application.Contracts.Validations.Questions
         public AddOptionsDtoValidation()
         {
             RuleFor(x => x.Content)
-                  .NotEmpty().WithMessage("Option content must not be empty.")
-                  .MaximumLength(500).WithMessage("Option content must not exceed 500 characters.");
+                  .NotEmpty().WithMessage("محتوى الخيار مطلوب.")
+                  .MaximumLength(500).WithMessage("محتوى الخيار لا يجب أن يتجاوز 500 حرف.");
             RuleFor(x => x.IsCorrect)
-                .NotNull().WithMessage("Option correctness must be specified.");
+                .NotNull().WithMessage("يجب تحديد صحة الخيار.");
         }
     }
 }

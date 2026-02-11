@@ -3,7 +3,7 @@ using FluentValidation;
 
 namespace Elm.Application.Contracts.Validations.Authentication
 {
-    public sealed class RegisterStudentCommandValidation : AbstractValidator<RegisterStudentCommand>
+    public sealed class RegisterStudentCommandValidation : AbstractValidator<RegisterLeaderCommand>
     {
         public RegisterStudentCommandValidation()
         {

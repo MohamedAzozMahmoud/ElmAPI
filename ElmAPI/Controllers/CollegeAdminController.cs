@@ -2,11 +2,12 @@
 using Elm.Application.Contracts.Features.College.Commands;
 using Elm.Application.Contracts.Features.College.DTOs;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Elm.API.Controllers
 {
-    //[Authorize("Admin")]
+    [Authorize(Roles = "Admin")]
     //[EnableRateLimiting("UserRolePolicy")]
     [Route("api/admin/[controller]")]
     [ApiController]
@@ -28,7 +29,7 @@ namespace Elm.API.Controllers
         // PUT: api/College/
         [HttpPut]
         [Route("Update")]
-        [ProducesResponseType(typeof(Result<CollegeDto>), 200)]
+        [ProducesResponseType(typeof(Result<bool>), 200)]
         public async Task<IActionResult> UpdateCollege([FromBody] UpdateCollegeCommand command)
             => HandleResult(await _mediator.Send(command));
 

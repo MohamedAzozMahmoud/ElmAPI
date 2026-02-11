@@ -3,10 +3,11 @@ using Elm.Application.Contracts.Features.Questions.DTOs;
 using Elm.Application.Contracts.Features.Questions.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Elm.API.Controllers
 {
-    //[EnableRateLimiting("UserRolePolicy")]
+    [EnableRateLimiting("UserRolePolicy")]
     [Route("api/[controller]")]
     [ApiController]
     public class QuestionPublicController : ApiBaseController

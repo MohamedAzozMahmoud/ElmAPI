@@ -3,5 +3,5 @@ using MediatR;
 
 namespace Elm.Application.Contracts.Features.Files.Commands
 {
-    public record RatingFileCommand(int fileId, int ratedByDoctorId, string comment, DoctorRating rating) : IRequest<Result<bool>>;
+    public record RatingFileCommand(int fileId, string userId, string comment, DoctorRating rating) : IRequest<Result<bool>>;
 }

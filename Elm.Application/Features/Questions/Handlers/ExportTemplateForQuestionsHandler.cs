@@ -30,7 +30,7 @@ namespace Elm.Application.Features.Questions.Handlers
                 {
                     return Result<MemoryStream>.Failure("Failed to generate Excel template.");
                 }
-                template.Position = 0;
+                if (template.CanSeek) template.Position = 0;
                 return Result<MemoryStream>.Success(template);
             }
         }

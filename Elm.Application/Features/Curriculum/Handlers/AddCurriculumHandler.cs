@@ -1,8 +1,8 @@
-﻿using AutoMapper;
-using Elm.Application.Contracts;
+﻿using Elm.Application.Contracts;
 using Elm.Application.Contracts.Features.Curriculum.Commands;
 using Elm.Application.Contracts.Features.Curriculum.DTOs;
 using Elm.Application.Contracts.Repositories;
+using Elm.Application.Mapper.Elm.Application.Mappers;
 using MediatR;
 
 namespace Elm.Application.Features.QuestionsBank.Handlers
@@ -10,12 +10,12 @@ namespace Elm.Application.Features.QuestionsBank.Handlers
     public sealed class AddCurriculumHandler : IRequestHandler<AddCurriculumCommand, Result<CurriculumDto>>
     {
         private readonly ICurriculumRepository repository;
-        private readonly IMapper mapper;
+        private readonly MappingProvider _mapping;
 
-        public AddCurriculumHandler(ICurriculumRepository repository, IMapper mapper)
+        public AddCurriculumHandler(ICurriculumRepository repository, MappingProvider mapping)
         {
             this.repository = repository;
-            this.mapper = mapper;
+            _mapping = mapping;
         }
         public async Task<Result<CurriculumDto>> Handle(AddCurriculumCommand request, CancellationToken cancellationToken)
         {
@@ -27,7 +27,7 @@ namespace Elm.Application.Features.QuestionsBank.Handlers
                 DoctorId = request.DoctorId
             };
             var addedCurriculum = await repository.AddAsync(curriculum);
-            var curriculumDto = mapper.Map<CurriculumDto>(addedCurriculum);
+            var curriculumDto = _mapping.MapToDto(addedCurriculum);
             return Result<CurriculumDto>.Success(curriculumDto);
         }
     }

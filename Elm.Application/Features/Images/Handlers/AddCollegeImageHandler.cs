@@ -36,7 +36,11 @@ namespace Elm.Application.Features.Images.Handlers
                 StorageName = Path.GetFileName(imagePath.Data)
 
             };
-            await genericRepository.UpdateAsync(college);
+            var result = await genericRepository.UpdateAsync(college);
+            if (!result)
+            {
+                return Result<bool>.Failure("Failed to update college image", 500);
+            }
             return Result<bool>.Success(true);
         }
     }

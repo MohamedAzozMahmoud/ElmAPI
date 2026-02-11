@@ -3,12 +3,14 @@ using Elm.Application.Contracts.Features.Notifications.Commands;
 using Elm.Application.Contracts.Features.Notifications.DTOs;
 using Elm.Application.Contracts.Features.Notifications.Queries;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Elm.API.Controllers
 {
-    //[Authorize]
-    //[EnableRateLimiting("UserRolePolicy")]
+    [Authorize(Roles = "Doctor")]
+    [EnableRateLimiting("UserRolePolicy")]
     [Route("api/[controller]")]
     [ApiController]
     public class NotificationsController : ApiBaseController

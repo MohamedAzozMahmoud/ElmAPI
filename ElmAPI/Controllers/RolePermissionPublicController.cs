@@ -8,8 +8,8 @@ using Microsoft.AspNetCore.RateLimiting;
 
 namespace Elm.API.Controllers
 {
-    //[Authorize]
-    //[EnableRateLimiting("UserRolePolicy")]
+    [Authorize]
+    [EnableRateLimiting("UserRolePolicy")]
     [Route("api/[controller]")]
     [ApiController]
     public class RolePermissionPublicController : ApiBaseController
@@ -19,11 +19,11 @@ namespace Elm.API.Controllers
         {
             _mediator = mediator;
         }
-        // api/RolePermission/GetPermissionsByRoleId
+        // api/RolePermission/GetPermissionsByRoleName
         [HttpGet]
-        [Route("GetPermissionsByRoleId/{roleId}")]
+        [Route("GetPermissionsByRoleName/{roleName}")]
         [ProducesResponseType(typeof(Result<List<GetPermissionsDto>>), 200)]
-        public async Task<IActionResult> GetPermissionsByRoleId([FromRoute] string roleId)
-            => HandleResult(await _mediator.Send(new GetAllRolePermissionsQuery(roleId)));
+        public async Task<IActionResult> GetPermissionsByRoleName([FromRoute] string roleName)
+            => HandleResult(await _mediator.Send(new GetAllRolePermissionsQuery(roleName)));
     }
 }

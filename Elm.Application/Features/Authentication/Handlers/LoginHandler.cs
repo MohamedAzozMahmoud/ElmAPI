@@ -24,7 +24,7 @@ namespace Elm.Application.Features.Authentication.Handlers
         {
             var user = await _userManager.FindByNameAsync(request.UserName);
             var isPasswordValid = await _userManager.CheckPasswordAsync(user, request.Password);
-            if (!isPasswordValid || user == null)
+            if (!isPasswordValid || user == null || !user.IsActived)
                 return Result<AuthModelDto>.Failure("كلمة المرور او اسم المستخدم غير صحيح");
 
             var roles = await _userManager.GetRolesAsync(user);

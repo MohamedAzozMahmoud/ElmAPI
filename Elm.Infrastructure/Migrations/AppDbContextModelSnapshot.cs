@@ -141,6 +141,15 @@ namespace Elm.Infrastructure.Migrations
                     b.Property<int>("DoctorId")
                         .HasColumnType("int");
 
+                    b.Property<byte>("EndMonth")
+                        .HasColumnType("tinyint");
+
+                    b.Property<bool>("IsPublished")
+                        .HasColumnType("bit");
+
+                    b.Property<byte>("StartMonth")
+                        .HasColumnType("tinyint");
+
                     b.Property<int>("SubjectId")
                         .HasColumnType("int");
 
@@ -172,6 +181,9 @@ namespace Elm.Infrastructure.Migrations
                         .HasColumnType("int");
 
                     b.Property<bool>("IsPaid")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsPublished")
                         .HasColumnType("bit");
 
                     b.Property<string>("Name")
@@ -228,7 +240,6 @@ namespace Elm.Infrastructure.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Description")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
@@ -498,6 +509,30 @@ namespace Elm.Infrastructure.Migrations
                     b.ToTable("RolePermissions");
                 });
 
+            modelBuilder.Entity("Elm.Domain.Entities.Settings", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Key")
+                        .IsUnique();
+
+                    b.ToTable("Settings");
+                });
+
             modelBuilder.Entity("Elm.Domain.Entities.Student", b =>
                 {
                     b.Property<int>("Id")
@@ -619,11 +654,12 @@ namespace Elm.Infrastructure.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CollegeId");
+                    b.HasIndex("CollegeId", "Name")
+                        .IsUnique();
 
                     b.ToTable("Years");
                 });
@@ -814,7 +850,7 @@ namespace Elm.Infrastructure.Migrations
                     b.HasOne("Elm.Domain.Entities.Curriculum", "Curriculum")
                         .WithMany("Files")
                         .HasForeignKey("CurriculumId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Elm.Domain.Entities.Doctor", "RatedByDoctor")
@@ -862,7 +898,7 @@ namespace Elm.Infrastructure.Migrations
                     b.HasOne("Elm.Domain.Entities.QuestionsBank", "QuestionBank")
                         .WithMany("Questions")
                         .HasForeignKey("QuestionBankId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("QuestionBank");
@@ -873,7 +909,7 @@ namespace Elm.Infrastructure.Migrations
                     b.HasOne("Elm.Domain.Entities.Curriculum", "Curriculum")
                         .WithMany("QuestionsBanks")
                         .HasForeignKey("CurriculumId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Curriculum");
@@ -941,7 +977,7 @@ namespace Elm.Infrastructure.Migrations
                     b.HasOne("Elm.Domain.Entities.Image", "Img")
                         .WithOne("University")
                         .HasForeignKey("Elm.Domain.Entities.University", "ImgId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.Navigation("Img");
                 });

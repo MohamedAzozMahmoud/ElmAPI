@@ -19,15 +19,15 @@ namespace Elm.Application.Features.University.Handlers
         public async Task<Result<bool>> Handle(DeleteUniversityCommand request, CancellationToken cancellationToken)
         {
             var university = await repository.GetByIdAsync(request.Id);
-
-            // استخدام null-coalescing operator
-            int imageId = university.ImgId ?? 0;
-
-            var result = await fileStorageService.DeleteUniversityImageAsync(university.Id, imageId, "Images");
+            if (university == null)
+            {
+                return Result<bool>.Failure("الجامعة غير موجودة", 404);
+            }
+            var result = await fileStorageService.DeleteUniversityAsync(university.Id);
 
             if (!result.IsSuccess)
             {
-                return Result<bool>.Failure("Failed to delete image from storage");
+                return Result<bool>.Failure("فشل في حذف الصورة من التخزين", 500);
             }
             return Result<bool>.Success(true);
         }

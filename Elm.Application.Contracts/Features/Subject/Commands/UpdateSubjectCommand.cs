@@ -1,5 +1,4 @@
-﻿using Elm.Application.Contracts.Features.Subject.DTOs;
-using MediatR;
+﻿using MediatR;
 
 namespace Elm.Application.Contracts.Features.Subject.Commands
 {
@@ -7,5 +6,5 @@ namespace Elm.Application.Contracts.Features.Subject.Commands
         int Id,
         string Name,
         string Code
-    ) : IRequest<Result<SubjectDto>>;
+    ) : IRequest<Result<bool>>;
 }

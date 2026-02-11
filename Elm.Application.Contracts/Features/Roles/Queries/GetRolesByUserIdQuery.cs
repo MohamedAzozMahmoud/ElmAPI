@@ -1,7 +1,6 @@
-﻿using Elm.Application.Contracts.Features.Roles.DTOs;
-using MediatR;
+﻿using MediatR;
 
 namespace Elm.Application.Contracts.Features.Roles.Queries
 {
-    public record GetRolesByUserIdQuery(string userId) : IRequest<Result<IEnumerable<RoleDto>>>;
+    public record GetRolesByUserIdQuery(string userId) : IRequest<Result<IEnumerable<string>>>;
 }

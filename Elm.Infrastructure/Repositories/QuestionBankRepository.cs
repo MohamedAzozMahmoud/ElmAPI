@@ -13,7 +13,6 @@ namespace Elm.Infrastructure.Repositories
         {
             context = _context;
         }
-
         public async Task<Result<List<QuestionsBankDto>>> GetQuestionsBank(int curriculumId)
         {
             var questionsBanks = await context.QuestionsBanks

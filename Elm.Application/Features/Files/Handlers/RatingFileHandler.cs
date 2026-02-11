@@ -11,10 +11,12 @@ namespace Elm.Application.Features.Files.Handlers
     {
         private readonly IFileStorageService fileStorage;
         private readonly IGenericRepository<Domain.Entities.Files> filesRepository;
-        public RatingFileHandler(IFileStorageService fileStorage, IGenericRepository<Domain.Entities.Files> filesRepository)
+        private readonly IDoctorRepository doctorsRepository;
+        public RatingFileHandler(IFileStorageService fileStorage, IGenericRepository<Domain.Entities.Files> filesRepository, IDoctorRepository doctorsRepository)
         {
             this.fileStorage = fileStorage;
             this.filesRepository = filesRepository;
+            this.doctorsRepository = doctorsRepository;
         }
         public async Task<Result<bool>> Handle(RatingFileCommand request, CancellationToken cancellationToken)
         {
@@ -23,7 +25,12 @@ namespace Elm.Application.Features.Files.Handlers
             {
                 return Result<bool>.Failure("File not found", 404);
             }
-            return await fileStorage.RatingFileAsync(file.CurriculumId, request.ratedByDoctorId, request.fileId, request.rating, request.comment);
+            var doctor = await doctorsRepository.GetDoctor(request.userId);
+            if (doctor == null)
+            {
+                return Result<bool>.Failure("Doctor not found", 404);
+            }
+            return await fileStorage.RatingFileAsync(file.CurriculumId, doctor.Id, request.fileId, request.rating, request.comment);
         }
     }
 }

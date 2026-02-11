@@ -37,7 +37,7 @@ namespace Elm.Infrastructure.Repositories
             return false;
         }
 
-        public async Task<List<GetPermissionsDto>> GetPermissionsByRoleIdAsync(string roleId)
+        public async Task<List<GetPermissionsDto>> GetPermissionsByRoleNameAsync(string roleId)
         {
             return await context.RolePermissions
                 .AsNoTracking()

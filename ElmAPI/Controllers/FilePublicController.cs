@@ -3,10 +3,11 @@ using Elm.Application.Contracts.Features.Files.DTOs;
 using Elm.Application.Contracts.Features.Files.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Elm.API.Controllers
 {
-    //[EnableRateLimiting("UserRolePolicy")]
+    [EnableRateLimiting("UserRolePolicy")]
     [Route("api/[controller]")]
     [ApiController]
     public class FilePublicController : ApiBaseController

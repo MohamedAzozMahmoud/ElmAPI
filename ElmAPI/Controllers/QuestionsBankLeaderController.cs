@@ -2,12 +2,14 @@
 using Elm.Application.Contracts.Features.QuestionsBank.Commands;
 using Elm.Application.Contracts.Features.QuestionsBank.DTOs;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Elm.API.Controllers
 {
-    //[Authorize(Roles = "Leader")]
-    //[EnableRateLimiting("UserRolePolicy")]
+    [Authorize(Roles = "Leader")]
+    [EnableRateLimiting("UserRolePolicy")]
     [Route("api/leader/[controller]")]
     [ApiController]
     public class QuestionsBankLeaderController : ApiBaseController
@@ -28,7 +30,7 @@ namespace Elm.API.Controllers
         // Put: api/QuestionsBanks
         [HttpPut]
         [Route("UpdateQuestion")]
-        [ProducesResponseType(typeof(Result<QuestionsBankDto>), 200)]
+        [ProducesResponseType(typeof(Result<bool>), 200)]
         public async Task<IActionResult> UpdateQuestion([FromBody] UpdateQuestionsBankCommand command)
             => HandleResult(await mediator.Send(command));
 

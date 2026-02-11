@@ -1,12 +1,13 @@
 ﻿using Elm.API.Handler;
 using Elm.Application;
-using Elm.Application.AutoMapper;
 using Elm.Application.Contracts.Abstractions.Excel;
 using Elm.Application.Contracts.Abstractions.Files;
 using Elm.Application.Contracts.Abstractions.Realtime;
+using Elm.Application.Contracts.Abstractions.Settings;
 using Elm.Application.Contracts.Abstractions.TestService;
 using Elm.Application.Contracts.Repositories;
 using Elm.Application.Helper;
+using Elm.Application.Mapper.Elm.Application.Mappers;
 using Elm.Domain.Entities;
 using Elm.Infrastructure;
 using Elm.Infrastructure.BackgroundServices;
@@ -15,16 +16,20 @@ using Elm.Infrastructure.Repositories;
 using Elm.Infrastructure.Services.Excel;
 using Elm.Infrastructure.Services.Files;
 using Elm.Infrastructure.Services.Realtime;
+using Elm.Infrastructure.Services.Settings;
 using Elm.Infrastructure.Services.TestService;
+using Exceptionless;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
-using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 using Serilog;
+using System.Globalization;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.RateLimiting;
@@ -41,20 +46,25 @@ namespace ElmAPI
             //====== ( Add Identity & DbContext ) ========
             builder.Services.AddIdentity<AppUser, Role>().AddEntityFrameworkStores<AppDbContext>();
 
+
             builder.Services.AddDbContext<AppDbContext>(options =>
-            {
-                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
-            });
+            options.UseSqlServer(
+                builder.Configuration.GetConnectionString("DefaultConnection"),
+                sqlOptions => sqlOptions.EnableRetryOnFailure() // إضافة خاصية إعادة المحاولة
+            ));
 
             //************************************************
+            Log.Logger = new LoggerConfiguration()
+                .ReadFrom.Configuration(builder.Configuration)
+                .CreateLogger();
 
             // ===== ( Serilog Configuration ) ======
-            builder.Host.UseSerilog((context, services, configuration) =>
-            {
-                configuration.ReadFrom.Configuration(context.Configuration);
-            });
+            builder.Host.UseSerilog();
+            // ===== ( Exceptionless Configuration ) ======
+            builder.Services.AddExceptionless(builder.Configuration);
 
-            // ===== ( User Handelers Folder ) ======
+            // ===== ( ) ======
+            builder.Services.Configure<SettingsOptions>(builder.Configuration.GetSection("SettingsOptions"));
             builder.Services.Configure<JWT>(builder.Configuration.GetSection("JwtSettings"));
             builder.Services.AddApplication();
 
@@ -73,6 +83,9 @@ namespace ElmAPI
             builder.Services.AddScoped<IQuestionRepository, QuestionRepository>();
             builder.Services.AddScoped<IFileStorageService, FileStorageService>();
             builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+            builder.Services.AddScoped<IDoctorRepository, DoctorRepository>();
+
+            builder.Services.AddScoped<IStudentRepository, StudentRepository>();
 
             #endregion
 
@@ -85,12 +98,13 @@ namespace ElmAPI
             builder.Services.AddScoped<INotificationService, NotificationService>();
             builder.Services.AddScoped<ITestSessionService, TestSessionService>();
             builder.Services.AddScoped<ITestScoringService, TestScoringService>();
+            builder.Services.AddScoped<ISettingsService, SettingsService>();
 
             #endregion
 
-            #region AutoMapper
-            builder.Services.AddAutoMapper(typeof(Mapping).Assembly);
+            #region Mapper
 
+            builder.Services.AddSingleton<MappingProvider>();
             //builder.Services.AddAutoMapper(
             //    //typeof(Program).Assembly, // API Assembly
             //    Assembly.Load("Elm.Application") // Core Assembly
@@ -112,9 +126,9 @@ namespace ElmAPI
                     policy.WithOrigins(
                         "http://localhost:4200"
                     )
-                    .AllowAnyMethod()
-                    .AllowAnyHeader()
-                    .AllowCredentials();
+                       .AllowAnyHeader()
+                      .AllowAnyMethod()
+                      .AllowCredentials();
                 });
             });
 
@@ -135,25 +149,27 @@ namespace ElmAPI
                     o.TokenValidationParameters = new TokenValidationParameters
                     {
                         ValidateIssuerSigningKey = true,
-                        ValidateIssuer = true,
+                        ValidateIssuer = false,   // if false will be public
                         ValidateAudience = false, // if false will be public
                         ValidateLifetime = true,
                         ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
                         ValidAudience = builder.Configuration["JwtSettings:Audience"],
-                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:Key"]!)),
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:SecretKey"]!)),
                         ClockSkew = TimeSpan.Zero
                     };
                     o.Events = new JwtBearerEvents
                     {
                         OnMessageReceived = context =>
                         {
+                            // 1. محاولة قراءة التوكن من الـ Query String
                             var accessToken = context.Request.Query["access_token"];
-                            // If the request is for our hub...
+
+                            // 2. إذا كان التوكن موجوداً والمسار هو للـ Hub
                             var path = context.HttpContext.Request.Path;
                             if (!string.IsNullOrEmpty(accessToken) &&
-                                (path.StartsWithSegments("/notification")))
+                                path.StartsWithSegments("/notificationHub")) // نفس الاسم في MapHub
                             {
-                                // Read the token out of the query string
+                                // 3. تعيين التوكن للسياق ليتم التحقق منه
                                 context.Token = accessToken;
                             }
                             return Task.CompletedTask;
@@ -162,81 +178,129 @@ namespace ElmAPI
                 });
             #endregion
 
+            builder.Services.AddHttpContextAccessor(); // هذا السطر ضروري جداً
             builder.Services.AddAuthorization();
 
 
             builder.Services.AddSignalR();
+
             builder.Services.AddSingleton<IUserIdProvider, UserIdProvider>();
             builder.Services.AddMemoryCache();
             // 1. تسجيل خدمات الـ Health Check
             builder.Services.AddHealthChecks()
                 .AddDbContextCheck<AppDbContext>("Database");
 
+            builder.Services.Configure<ForwardedHeadersOptions>(options =>
+            {
+                options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+            });
 
             #region  Rate Limiter Configuration 
 
             builder.Services.AddRateLimiter(options =>
             {
+                // ═══════════════════════════════════════════════════════
+                //  1. Global Rate Limit - حماية من DDoS
+                // ════════════════════════════════════��══════════════════
+                options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
+                {
+                    return RateLimitPartition.GetFixedWindowLimiter("GlobalLimiter", _ => new FixedWindowRateLimiterOptions
+                    {
+                        PermitLimit = 500,
+                        Window = TimeSpan.FromMinutes(1),
+                        QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                        QueueLimit = 0
+                    });
+                });
+
+                // ═══════════════════════════════════════════════════════
+                //  2. OnRejected - رسالة الرفض مع Headers
+                // ═══════════════════════════════════════════════════════
                 options.OnRejected = async (context, token) =>
                 {
+                    var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+                    var clientIp = context.HttpContext.Request.Headers["X-Forwarded-For"].FirstOrDefault()
+                        ?? context.HttpContext.Connection.RemoteIpAddress?.ToString();
+
+                    logger.LogWarning(
+                        "Rate limit exceeded. IP: {ClientIp}, User: {User}, Path: {Path}",
+                        clientIp,
+                        context.HttpContext.User.Identity?.Name ?? "anonymous",
+                        context.HttpContext.Request.Path);
+
                     context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+
+                    TimeSpan retryAfter = TimeSpan.FromMinutes(1); // Default
+                    if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfterValue))
+                    {
+                        retryAfter = retryAfterValue;
+                    }
+
+                    context.HttpContext.Response.Headers.RetryAfter =
+                        ((int)retryAfter.TotalSeconds).ToString(NumberFormatInfo.InvariantInfo);
+
                     await context.HttpContext.Response.WriteAsJsonAsync(new
                     {
-                        Message = "لقد تخطيت الحد المسموح من الطلبات. يرجى الانتظار قليلاً ثم المحاولة مرة أخرى."
+                        Type = "https://tools.ietf.org/html/rfc6585#section-4",
+                        Title = "Too Many Requests",
+                        Status = 429,
+                        Message = "لقد تخطيت الحد المسموح من الطلبات. يرجى الانتظار قليلاً ثم المحاولة مرة أخرى.",
+                        RetryAfterSeconds = (int)retryAfter.TotalSeconds
                     }, token);
                 };
 
+                // ═══════════════════════════════════════════════════════
+                //  3. User Role Policy - حسب صلاحيات المستخدم
+                // ═══════════════════════════════════════════════════════
                 options.AddPolicy("UserRolePolicy", context =>
                 {
                     var userRole = context.User.FindFirstValue(ClaimTypes.Role);
-                    var userName = context.User.Identity?.Name ?? context.Connection.RemoteIpAddress?.ToString();
-                    if (userRole == "Admin")
-                    {
-                        return RateLimitPartition.GetFixedWindowLimiter(userName ?? "anonymous", _ => new FixedWindowRateLimiterOptions
-                        {
-                            PermitLimit = 500,
-                            Window = TimeSpan.FromMinutes(1),
-                            QueueProcessingOrder = QueueProcessingOrder.OldestFirst
-                        });
-                    }
-                    if (userRole == "Doctor")
-                    {
-                        return RateLimitPartition.GetFixedWindowLimiter(userName ?? "anonymous", _ => new FixedWindowRateLimiterOptions
-                        {
-                            PermitLimit = 150,
-                            Window = TimeSpan.FromMinutes(1),
-                            QueueProcessingOrder = QueueProcessingOrder.OldestFirst
-                        });
-                    }
-                    if (userRole == "Leader")
-                    {
-                        return RateLimitPartition.GetFixedWindowLimiter(userName ?? "anonymous", _ => new FixedWindowRateLimiterOptions
-                        {
-                            PermitLimit = 100,
-                            Window = TimeSpan.FromMinutes(1),
-                            QueueProcessingOrder = QueueProcessingOrder.OldestFirst
-                        });
-                    }
+                    var userName = context.User.Identity?.Name
+                        ?? context.Request.Headers["X-Forwarded-For"].FirstOrDefault()?.Split(',').FirstOrDefault()?.Trim()
+                        ?? context.Connection.RemoteIpAddress?.ToString()
+                        ?? "anonymous";
 
-                    return RateLimitPartition.GetFixedWindowLimiter(userName ?? "anonymous", _ => new FixedWindowRateLimiterOptions
+                    var (permitLimit, window) = userRole switch
                     {
-                        PermitLimit = 50,
-                        Window = TimeSpan.FromMinutes(1),
-                        QueueProcessingOrder = QueueProcessingOrder.OldestFirst
+                        "Doctor" => (200, TimeSpan.FromMinutes(1)),
+                        "Leader" => (150, TimeSpan.FromMinutes(1)),
+                        _ => (100, TimeSpan.FromMinutes(1))
+                    };
+
+                    return RateLimitPartition.GetSlidingWindowLimiter(userName, _ => new SlidingWindowRateLimiterOptions
+                    {
+                        PermitLimit = permitLimit,
+                        Window = window,
+                        SegmentsPerWindow = 6,  // كل segment = 10 ثواني (أدق من Fixed Window)
+                        QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                        QueueLimit = 0
                     });
-
                 });
 
-                options.AddFixedWindowLimiter("LoginPolicy", opt =>
+                // ═══════════════════════════════════════════════════════
+                //  4. Login Policy - حماية من Brute Force (Per-IP)
+                // ═══════════════════════════════════════════════════════
+                options.AddPolicy("LoginPolicy", context =>
                 {
-                    opt.PermitLimit = 5;
-                    opt.Window = TimeSpan.FromMinutes(5);
-                    opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+                    var clientIp = context.Request.Headers["X-Forwarded-For"].FirstOrDefault()?.Split(',').FirstOrDefault()?.Trim()
+                        ?? context.Connection.RemoteIpAddress?.ToString()
+                        ?? "anonymous";
+
+                    return RateLimitPartition.GetSlidingWindowLimiter(clientIp, _ => new SlidingWindowRateLimiterOptions
+                    {
+                        PermitLimit = 5,
+                        Window = TimeSpan.FromMinutes(5),
+                        SegmentsPerWindow = 5,
+                        QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                        QueueLimit = 0
+                    });
                 });
 
             });
 
             #endregion
+
+
 
             builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
             builder.Services.AddProblemDetails();
@@ -269,6 +333,15 @@ namespace ElmAPI
                 builder.Services.AddDataProtection()
                     .SetApplicationName("ElmAPI");
             }
+
+
+            // all next code is written by gitHub copilot 
+            // في الإنتاج، تأكد من أن Data Protection يستخدم تخزيناً ثابتاً للمفاتيح (مثل مجلد أو Azure Blob Storage)
+            // في التطوير، يمكنك استخدام الإعدادات الافتراضية لـ Data Protection
+            //builder.Services.AddDataProtection();
+            //builder.Services.AddHttpContextAccessor();
+            //builder.Services.AddProblemDetails();
+
             builder.Services.AddOpenApiDocument(cfg =>
             {
                 cfg.Title = "ElmAPI";
@@ -298,16 +371,33 @@ namespace ElmAPI
             app.MapOpenApi();
             app.MapScalarApiReference();
             //}
-            //======== ( Global Handler Exception  ) ==============
+            //*********************************
 
             app.UseExceptionHandler();
-            //*********************************
+            app.UseExceptionless();
 
             // 1. التوجيه وتأمين الاتصال
             app.UseHttpsRedirection();
-            app.UseStaticFiles(); // مهم جداً لأنك ترفع ملفات (summaries/images)
-            app.UseRouting();
+            // تفعيل Static Files
+            app.UseStaticFiles(new StaticFileOptions
+            {
+                FileProvider = new PhysicalFileProvider(
+                    Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Images")),
+                RequestPath = "/Images",
+                OnPrepareResponse = ctx =>
+                {
+                    // Cache للصور لمدة 7 أيام
+                    ctx.Context.Response.Headers.Append("Cache-Control", "public,max-age=604800");
 
+                    // Security Headers
+                    ctx.Context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+                }
+            });
+            // 5. التسجيل (Logging)
+            app.UseSerilogRequestLogging();
+
+            app.UseRouting();
+            app.UseForwardedHeaders(); // إضافة هذا السطر لمعالجة رؤوس التوجيه الأمامي
             // 2. السماح بالاتصال من الـ Frontend (CORS)
             app.UseCors("policy");
 
@@ -315,11 +405,9 @@ namespace ElmAPI
             app.UseAuthentication();
             app.UseAuthorization();
 
+
             // 4. الـ Rate Limiter (يجب أن يكون بعد الـ Authorization لكي يعرف Role المستخدم)
             app.UseRateLimiter();
-
-            // 5. التسجيل (Logging)
-            app.UseSerilogRequestLogging();
 
             // 6. تعريف المسارات (Endpoints)
             app.MapControllers();
