@@ -37,22 +37,23 @@ namespace Elm.Infrastructure.Repositories
             return false;
         }
 
-        public async Task<List<GetPermissionsDto>> GetPermissionsByRoleIdAsync(string roleId)
+        public async Task<List<GetPermissionsDto>> GetPermissionsByRoleNameAsync(string roleId)
         {
             return await context.RolePermissions
+                .AsNoTracking()
                 .Where(rp => rp.RoleId == roleId)
                 .Select(x => new GetPermissionsDto
                 {
                     PermissionId = x.PermissionId,
                     PermissionName = x.Permission.Name
                 })
-                .AsNoTracking()
                 .ToListAsync();
         }
 
         private async Task<RolePermissions> FindAsync(string roleId, int PermissionId)
         {
-            return await context.RolePermissions.SingleOrDefaultAsync(x => x.RoleId == roleId
+            return await context.RolePermissions
+                .SingleOrDefaultAsync(x => x.RoleId == roleId
                                 && x.PermissionId == PermissionId);
         }
     }

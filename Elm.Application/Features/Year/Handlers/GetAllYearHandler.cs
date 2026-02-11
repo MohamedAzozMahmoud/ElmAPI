@@ -1,5 +1,4 @@
-﻿using AutoMapper;
-using Elm.Application.Contracts;
+﻿using Elm.Application.Contracts;
 using Elm.Application.Contracts.Features.Year.DTOs;
 using Elm.Application.Contracts.Features.Year.Queries;
 using Elm.Application.Contracts.Repositories;
@@ -10,11 +9,9 @@ namespace Elm.Application.Features.Year.Handlers
     public sealed class GetAllYearHandler : IRequestHandler<GetAllYearQuery, Result<List<GetYearDto>>>
     {
         private readonly IYearRepository yearRepository;
-        private readonly IMapper mapper;
-        public GetAllYearHandler(IYearRepository yearRepository, IMapper mapper)
+        public GetAllYearHandler(IYearRepository yearRepository)
         {
             this.yearRepository = yearRepository;
-            this.mapper = mapper;
         }
 
         public async Task<Result<List<GetYearDto>>> Handle(GetAllYearQuery request, CancellationToken cancellationToken)

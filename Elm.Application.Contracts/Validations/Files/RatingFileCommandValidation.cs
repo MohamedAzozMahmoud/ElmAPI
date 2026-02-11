@@ -9,8 +9,8 @@ namespace Elm.Application.Contracts.Validations.Files
         {
             RuleFor(x => x.fileId)
                 .GreaterThan(0).WithMessage("File ID must be a positive integer.");
-            RuleFor(x => x.ratedByDoctorId)
-                .GreaterThan(0).WithMessage("Doctor ID must be a positive integer.");
+            RuleFor(x => x.userId)
+                .NotEmpty().WithMessage("User ID cannot be empty.");
             RuleFor(x => x.comment)
                 .NotEmpty().WithMessage("Comment cannot be empty.")
                 .MaximumLength(1000).WithMessage("Comment cannot exceed 1000 characters.");

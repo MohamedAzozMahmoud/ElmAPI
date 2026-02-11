@@ -1,5 +1,4 @@
-﻿using Elm.Application.Contracts.Features.College.DTOs;
-using MediatR;
+﻿using MediatR;
 
 namespace Elm.Application.Contracts.Features.College.Commands
 {
@@ -7,5 +6,5 @@ namespace Elm.Application.Contracts.Features.College.Commands
         (
          int Id
         , string Name
-        ) : IRequest<Result<CollegeDto>>;
+        ) : IRequest<Result<bool>>;
 }

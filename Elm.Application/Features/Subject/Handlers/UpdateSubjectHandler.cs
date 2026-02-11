@@ -1,37 +1,32 @@
-﻿using AutoMapper;
-using Elm.Application.Contracts;
+﻿using Elm.Application.Contracts;
 using Elm.Application.Contracts.Features.Subject.Commands;
-using Elm.Application.Contracts.Features.Subject.DTOs;
 using Elm.Application.Contracts.Repositories;
 using MediatR;
 
 namespace Elm.Application.Features.Subject.Handlers
 {
-    public sealed class UpdateSubjectHandler : IRequestHandler<UpdateSubjectCommand, Result<SubjectDto>>
+    public sealed class UpdateSubjectHandler : IRequestHandler<UpdateSubjectCommand, Result<bool>>
     {
         private readonly ISubjectRepository repository;
-        private readonly IMapper mapper;
-        public UpdateSubjectHandler(ISubjectRepository repository, IMapper mapper)
+        public UpdateSubjectHandler(ISubjectRepository repository)
         {
             this.repository = repository;
-            this.mapper = mapper;
         }
-        public async Task<Result<SubjectDto>> Handle(UpdateSubjectCommand request, CancellationToken cancellationToken)
+        public async Task<Result<bool>> Handle(UpdateSubjectCommand request, CancellationToken cancellationToken)
         {
             var subject = await repository.GetByIdAsync(request.Id);
             if (subject is null)
             {
-                return Result<SubjectDto>.Failure("Subject not found.");
+                return Result<bool>.Failure("Subject not found.");
             }
             subject.Name = request.Name;
             subject.Code = request.Code;
             var result = await repository.UpdateAsync(subject);
-            if (result is null)
+            if (!result)
             {
-                return Result<SubjectDto>.Failure("Failed to update subject.");
+                return Result<bool>.Failure("Failed to update subject.");
             }
-            var subjectDto = mapper.Map<SubjectDto>(result);
-            return Result<SubjectDto>.Success(subjectDto);
+            return Result<bool>.Success(result);
         }
     }
 }

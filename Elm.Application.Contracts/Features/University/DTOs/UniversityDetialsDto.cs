@@ -4,6 +4,7 @@
     {
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
-        public string ImageName { get; set; }
+        public string StorageName { get; set; } = string.Empty;
+        public string URL { get; set; }
     }
 }

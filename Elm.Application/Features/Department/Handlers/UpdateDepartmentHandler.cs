@@ -1,33 +1,33 @@
-﻿using AutoMapper;
-using Elm.Application.Contracts;
+﻿using Elm.Application.Contracts;
 using Elm.Application.Contracts.Features.Department.Commands;
-using Elm.Application.Contracts.Features.Department.DTOs;
 using Elm.Application.Contracts.Repositories;
 using MediatR;
 
 namespace Elm.Application.Features.Department.Handlers
 {
-    public sealed class UpdateDepartmentHandler : IRequestHandler<UpdateDepartmentCommand, Result<DepartmentDto>>
+    public sealed class UpdateDepartmentHandler : IRequestHandler<UpdateDepartmentCommand, Result<bool>>
     {
         private readonly IDepartmentRepository repository;
-        private readonly IMapper mapper;
-        public UpdateDepartmentHandler(IDepartmentRepository repository, IMapper mapper)
+        public UpdateDepartmentHandler(IDepartmentRepository repository)
         {
             this.repository = repository;
-            this.mapper = mapper;
         }
-        public async Task<Result<DepartmentDto>> Handle(UpdateDepartmentCommand request, CancellationToken cancellationToken)
+        public async Task<Result<bool>> Handle(UpdateDepartmentCommand request, CancellationToken cancellationToken)
         {
             var department = await repository.GetByIdAsync(request.Id);
             if (department == null)
             {
-                return Result<DepartmentDto>.Failure("Department not found");
+                return Result<bool>.Failure("لا يوجد قسم بهذا المعرف", 404);
             }
             department.Name = request.Name;
             department.IsPaid = request.IsPaid;
-            var updatedDepartment = await repository.UpdateAsync(department);
-            var departmentDto = mapper.Map<DepartmentDto>(updatedDepartment);
-            return Result<DepartmentDto>.Success(departmentDto);
+            department.Type = request.Type;
+            var result = await repository.UpdateAsync(department);
+            if (!result)
+            {
+                return Result<bool>.Failure("فشل في تحديث القسم", 500);
+            }
+            return Result<bool>.Success(true);
         }
     }
 }

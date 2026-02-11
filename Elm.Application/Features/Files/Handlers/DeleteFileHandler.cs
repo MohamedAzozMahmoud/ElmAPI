@@ -23,15 +23,10 @@ namespace Elm.Application.Features.Files.Handlers
             {
                 return Result<bool>.Failure("File not found.");
             }
-            var deleteResult = await fileStorage.DeleteFile(file.StorageName, "Files");
+            var deleteResult = await fileStorage.DeleteFile(file.StorageName);
             if (!deleteResult.IsSuccess)
             {
                 return Result<bool>.Failure("Failed to delete file from storage.");
-            }
-            var result = await filesRepository.DeleteAsync(file.Id);
-            if (result)
-            {
-                return Result<bool>.Failure("Failed to delete file.");
             }
             return Result<bool>.Success(true);
         }

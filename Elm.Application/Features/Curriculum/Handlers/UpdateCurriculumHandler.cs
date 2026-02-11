@@ -1,8 +1,8 @@
-﻿using AutoMapper;
-using Elm.Application.Contracts;
+﻿using Elm.Application.Contracts;
 using Elm.Application.Contracts.Features.Curriculum.Commands;
 using Elm.Application.Contracts.Features.Curriculum.DTOs;
 using Elm.Application.Contracts.Repositories;
+using Elm.Application.Mapper.Elm.Application.Mappers;
 using MediatR;
 
 namespace Elm.Application.Features.QuestionsBank.Handlers
@@ -10,11 +10,11 @@ namespace Elm.Application.Features.QuestionsBank.Handlers
     public sealed class UpdateCurriculumHandler : IRequestHandler<UpdateCurriculumCommand, Result<CurriculumDto>>
     {
         private readonly ICurriculumRepository repository;
-        private readonly IMapper mapper;
-        public UpdateCurriculumHandler(ICurriculumRepository repository, IMapper mapper)
+        private readonly MappingProvider _mapping;
+        public UpdateCurriculumHandler(ICurriculumRepository repository, MappingProvider mapping)
         {
             this.repository = repository;
-            this.mapper = mapper;
+            _mapping = mapping;
         }
         public async Task<Result<CurriculumDto>> Handle(UpdateCurriculumCommand request, CancellationToken cancellationToken)
         {
@@ -28,7 +28,11 @@ namespace Elm.Application.Features.QuestionsBank.Handlers
             existingCurriculum.DepartmentId = request.DepartmentId;
             existingCurriculum.DoctorId = request.DoctorId;
             var updatedCurriculum = await repository.UpdateAsync(existingCurriculum);
-            var curriculumDto = mapper.Map<CurriculumDto>(updatedCurriculum);
+            if (updatedCurriculum == null)
+            {
+                return Result<CurriculumDto>.Failure("Failed to update curriculum");
+            }
+            var curriculumDto = _mapping.MapToDto(existingCurriculum);
             return Result<CurriculumDto>.Success(curriculumDto);
         }
     }

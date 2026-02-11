@@ -34,8 +34,8 @@ namespace Elm.Infrastructure.Repositories
         public async Task<List<NotificationDto>> GetUserNotificationsAsync(string userId)
         {
             return await _context.Notifications
-                .Where(n => n.AppUserId == userId)
                 .AsNoTracking() // للسرعة وتقليل استهلاك الذاكرة
+                .Where(n => n.AppUserId == userId)
                 .OrderBy(n => n.IsRead) // غير المقروء (false/0) يظهر أولاً
                 .ThenByDescending(n => n.CreatedAt) // ثم الأحدث أولاً
                 .Select(n => new NotificationDto

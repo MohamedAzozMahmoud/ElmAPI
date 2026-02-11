@@ -1,6 +1,6 @@
 ﻿namespace Elm.Application.Helper
 {
-    public class JWT
+    public record JWT
     {
         public string Key { get; set; }
         public string Issuer { get; set; }

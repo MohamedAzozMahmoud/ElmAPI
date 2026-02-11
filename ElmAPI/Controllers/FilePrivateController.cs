@@ -1,4 +1,5 @@
-﻿using Elm.Application.Contracts.Features.Files.Commands;
+﻿using Elm.Application.Contracts;
+using Elm.Application.Contracts.Features.Files.Commands;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -23,7 +24,7 @@ namespace Elm.API.Controllers
         [HttpPost]
         [Route("UploadFile")]
         [Consumes("multipart/form-data")]
-        [ProducesResponseType(typeof(string), 200)]
+        [ProducesResponseType(typeof(Result<string>), 200)]
         public async Task<IActionResult> Post([FromForm] UploadFileCommand command)
             => HandleResult(await mediator.Send(command));
 
@@ -31,14 +32,14 @@ namespace Elm.API.Controllers
         [Authorize(Roles = "Leader")]
         [HttpDelete]
         [Route("DeleteFile/{id:int}")]
-        [ProducesResponseType(typeof(bool), 200)]
+        [ProducesResponseType(typeof(Result<bool>), 200)]
         public async Task<IActionResult> Delete([FromRoute] int id)
             => HandleResult(await mediator.Send(new DeleteFileCommand(id)));
         // POST: api/File/RateFile
         [Authorize(Roles = "Doctor")]
         [HttpPost]
         [Route("RateFile")]
-        [ProducesResponseType(typeof(bool), 200)]
+        [ProducesResponseType(typeof(Result<bool>), 200)]
         public async Task<IActionResult> RateFile([FromBody] RatingFileCommand command)
             => HandleResult(await mediator.Send(command));
 

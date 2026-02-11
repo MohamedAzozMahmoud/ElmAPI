@@ -1,8 +1,8 @@
-﻿using AutoMapper;
-using Elm.Application.Contracts;
+﻿using Elm.Application.Contracts;
 using Elm.Application.Contracts.Features.Subject.Commands;
 using Elm.Application.Contracts.Features.Subject.DTOs;
 using Elm.Application.Contracts.Repositories;
+using Elm.Application.Mapper.Elm.Application.Mappers;
 using MediatR;
 
 namespace Elm.Application.Features.Subject.Handlers
@@ -11,12 +11,12 @@ namespace Elm.Application.Features.Subject.Handlers
     public sealed class AddSubjectHandler : IRequestHandler<AddSubjectCommand, Result<SubjectDto>>
     {
         private readonly ISubjectRepository repository;
-        private readonly IMapper mapper;
+        private readonly MappingProvider mapping;
 
-        public AddSubjectHandler(ISubjectRepository repository, IMapper mapper)
+        public AddSubjectHandler(ISubjectRepository repository, MappingProvider mapping)
         {
             this.repository = repository;
-            this.mapper = mapper;
+            this.mapping = mapping;
         }
         public async Task<Result<SubjectDto>> Handle(AddSubjectCommand request, CancellationToken cancellationToken)
         {
@@ -30,7 +30,7 @@ namespace Elm.Application.Features.Subject.Handlers
             {
                 return Result<SubjectDto>.Failure("Failed to add subject.");
             }
-            var subjectDto = mapper.Map<SubjectDto>(result);
+            var subjectDto = mapping.MapToDto(result);
             return Result<SubjectDto>.Success(subjectDto);
         }
     }

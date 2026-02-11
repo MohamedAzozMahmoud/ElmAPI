@@ -1,4 +1,5 @@
-﻿using Elm.Application.Contracts.Features.Permissions.DTOs;
+﻿using Elm.Application.Contracts;
+using Elm.Application.Contracts.Features.Permissions.DTOs;
 using Elm.Application.Contracts.Features.Permissions.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -18,11 +19,11 @@ namespace Elm.API.Controllers
         {
             _mediator = mediator;
         }
-        // api/RolePermission/GetPermissionsByRoleId
+        // api/RolePermission/GetPermissionsByRoleName
         [HttpGet]
-        [Route("GetPermissionsByRoleId/{roleId}")]
-        [ProducesResponseType(typeof(List<GetPermissionsDto>), 200)]
-        public async Task<IActionResult> GetPermissionsByRoleId([FromRoute] string roleId)
-            => HandleResult(await _mediator.Send(new GetAllRolePermissionsQuery(roleId)));
+        [Route("GetPermissionsByRoleName/{roleName}")]
+        [ProducesResponseType(typeof(Result<List<GetPermissionsDto>>), 200)]
+        public async Task<IActionResult> GetPermissionsByRoleName([FromRoute] string roleName)
+            => HandleResult(await _mediator.Send(new GetAllRolePermissionsQuery(roleName)));
     }
 }

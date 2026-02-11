@@ -84,7 +84,7 @@
       "excludedParameterNames": [],
       
       "templateDirectory": null,
-      "serviceHost": null,
+      "serviceHost": "elm.runasp.net",
       "serviceSchemes": null,
       "output": "C:\\Users\\Mega Store\\Desktop\\angular\\Angular20\\ElmAPP\\src\\app\\core\\api\\clients.ts",
       "newLineBehavior": "Auto"

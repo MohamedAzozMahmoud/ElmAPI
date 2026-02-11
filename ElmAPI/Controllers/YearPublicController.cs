@@ -1,4 +1,5 @@
-﻿using Elm.Application.Contracts.Features.Year.DTOs;
+﻿using Elm.Application.Contracts;
+using Elm.Application.Contracts.Features.Year.DTOs;
 using Elm.Application.Contracts.Features.Year.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -21,14 +22,14 @@ namespace Elm.API.Controllers
         // GET: api/<YearController>
         [HttpGet]
         [Route("GetAllYears/{collegeId:int}")]
-        [ProducesResponseType(typeof(List<GetYearDto>), 200)]
-        public async Task<IActionResult> GetAllYears([FromQuery] int collegeId)
+        [ProducesResponseType(typeof(Result<List<GetYearDto>>), 200)]
+        public async Task<IActionResult> GetAllYears([FromRoute] int collegeId)
         => HandleResult(await mediator.Send(new GetAllYearQuery(collegeId)));
 
         // GET api/<YearController>/Id
         [HttpGet]
         [Route("GetYearById/{yearId:int}")]
-        [ProducesResponseType(typeof(GetYearDto), 200)]
+        [ProducesResponseType(typeof(Result<GetYearDto>), 200)]
         public async Task<IActionResult> GetYearById([FromRoute] int yearId)
             => Ok(await mediator.Send(new GetYearByIdQuery(yearId)));
     }

@@ -7,6 +7,6 @@ namespace Elm.Application.Contracts.Repositories
     {
         public Task<bool> AddRolePermissionAsync(RolePermissions rolePermissions);
         public Task<bool> DeleteRolePermissionAsync(string roleId, int PermissionId);
-        public Task<List<GetPermissionsDto>> GetPermissionsByRoleIdAsync(string roleId);
+        public Task<List<GetPermissionsDto>> GetPermissionsByRoleNameAsync(string roleId);
     }
 }

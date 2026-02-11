@@ -1,4 +1,5 @@
 ﻿using Elm.Application.Contracts;
+using Elm.Application.Contracts.Abstractions.Settings;
 using Elm.Application.Contracts.Features.Options.DTOs;
 using Elm.Application.Contracts.Features.Questions.DTOs;
 using Elm.Application.Contracts.Features.Test.DTOs;
@@ -13,14 +14,23 @@ namespace Elm.Infrastructure.Repositories
     {
         private readonly AppDbContext context;
         private readonly IMemoryCache memoryCache;
-        public QuestionRepository(AppDbContext _context, IMemoryCache _memoryCache) : base(_context)
+        private readonly ISettingsService settingsService;
+
+        public QuestionRepository(AppDbContext _context, IMemoryCache _memoryCache, ISettingsService _settingsService) : base(_context)
         {
             context = _context;
             memoryCache = _memoryCache;
+            settingsService = _settingsService;
         }
 
         public async Task<Result<bool>> AddRingQuestions(int questionsBankId, List<AddQuestionsDto> questionsDtos)
         {
+            var maxQuestionsPerBank = await settingsService.GetMaxQuestionsAsync();
+            var existingQuestionsCount = await CountQuestions(questionsBankId);
+            if (existingQuestionsCount + questionsDtos.Count > maxQuestionsPerBank)
+            {
+                return Result<bool>.Failure($"لا يمكن إضافة الأسئلة. تجاوز الحد الأقصى ({maxQuestionsPerBank} سؤالًا في البنك).");
+            }
             var questions = new List<Question>();
             foreach (var questionDto in questionsDtos)
             {
@@ -45,6 +55,12 @@ namespace Elm.Infrastructure.Repositories
         public async Task<Result<bool>> AddRingQuestionsFromExcel(int questionsBankId, List<TemplateQuestionsDto> templateQuestions)
         {
             var questions = new List<Question>();
+            var maxQuestionsPerBank = await settingsService.GetMaxQuestionsAsync();
+            var existingQuestionsCount = await CountQuestions(questionsBankId);
+            if (existingQuestionsCount + templateQuestions.Count > maxQuestionsPerBank)
+            {
+                return Result<bool>.Failure($"لا يمكن إضافة الأسئلة. تجاوز الحد الأقصى ({maxQuestionsPerBank} سؤالًا في البنك).");
+            }
             foreach (var templateQuestion in templateQuestions)
             {
                 var question = new Question
@@ -76,6 +92,7 @@ namespace Elm.Infrastructure.Repositories
         public async Task<Result<List<QuestionsDto>>> GetQuestionsByBankId(int questionsBankId)
         {
             var questions = await context.Questions
+                .AsNoTracking()
                 .Where(q => q.QuestionBankId == questionsBankId)
                 .Include(q => q.Options)
                 .Select(q => new QuestionsDto
@@ -90,13 +107,13 @@ namespace Elm.Infrastructure.Repositories
                         IsCorrect = o.IsCorrect
                     }).ToList()
                 })
-                .AsNoTracking()
                 .ToListAsync();
             return Result<List<QuestionsDto>>.Success(questions);
         }
         public async Task<Result<QuestionsDto>> GetQuestionById(int questionId)
         {
             var question = await context.Questions
+                .AsNoTracking()
                 .Where(q => q.Id == questionId)
                 .Include(q => q.Options)
                 .Select(q => new QuestionsDto
@@ -111,11 +128,17 @@ namespace Elm.Infrastructure.Repositories
                         IsCorrect = o.IsCorrect
                     }).ToList()
                 })
-                .AsNoTracking()
                 .FirstOrDefaultAsync();
             return Result<QuestionsDto>.Success(question);
         }
 
+        private async Task<int> CountQuestions(int questionsBankId)
+        {
+            return await context.Questions
+                .AsNoTracking()
+                .Where(q => q.QuestionBankId == questionsBankId)
+                .CountAsync();
+        }
 
         //public async Task<Result<TestDataDto>> GetRandomQuestionsByBankId(
         //    int questionsBankId,

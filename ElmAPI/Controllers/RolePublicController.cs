@@ -1,4 +1,4 @@
-﻿using Elm.Application.Contracts.Features.Roles.DTOs;
+﻿using Elm.Application.Contracts;
 using Elm.Application.Contracts.Features.Roles.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -20,9 +20,9 @@ namespace Elm.API.Controllers
             this.mediator = mediator;
         }
         [HttpGet]
-        [Route("GetUserRoles")]
-        [ProducesResponseType(typeof(IEnumerable<RoleDto>), 200)]
-        public async Task<IActionResult> GetUserRoles([FromBody] string userId)
+        [Route("GetUserRoles/{userId}")]
+        [ProducesResponseType(typeof(Result<IEnumerable<string>>), 200)]
+        public async Task<IActionResult> GetUserRoles([FromRoute] string userId)
         => HandleResult(await mediator.Send(new GetRolesByUserIdQuery(userId)));
 
     }

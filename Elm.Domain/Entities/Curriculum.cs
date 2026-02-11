@@ -3,6 +3,11 @@
     public class Curriculum
     {
         public int Id { get; set; }
+
+        public bool IsPublished { get; set; } = true; // تحكم يدوي للأدمن (Force Hide)
+        public byte StartMonth { get; set; } = 2; // بداية الترم
+        public byte EndMonth { get; set; } = 7;   // نهاية الترم
+
         // Navigation Properties
         public int YearId { get; set; }
         public Year Year { get; set; }

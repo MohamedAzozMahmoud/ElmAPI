@@ -27,8 +27,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Elm.Application", "Elm.Appl
 		{2844F940-FAF4-4D99-BAD1-CFDA9F61BEA6} = {2844F940-FAF4-4D99-BAD1-CFDA9F61BEA6}
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Elm.Test", "Elm.Test\Elm.Test.csproj", "{698FC9F5-3305-4518-94BE-5CDCF55CED55}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -55,10 +53,6 @@ Global
 		{14CE8110-5DB0-424E-BAE9-F96ADBB4AC6E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{14CE8110-5DB0-424E-BAE9-F96ADBB4AC6E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{14CE8110-5DB0-424E-BAE9-F96ADBB4AC6E}.Release|Any CPU.Build.0 = Release|Any CPU
-		{698FC9F5-3305-4518-94BE-5CDCF55CED55}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{698FC9F5-3305-4518-94BE-5CDCF55CED55}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{698FC9F5-3305-4518-94BE-5CDCF55CED55}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{698FC9F5-3305-4518-94BE-5CDCF55CED55}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

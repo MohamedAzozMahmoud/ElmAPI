@@ -21,7 +21,7 @@ namespace Elm.Application.Features.Questions.Handlers
             var addquestions = excelService.ReadExcelFile<TemplateQuestionsDto>(request.ExcelFile);
             if (addquestions.Any(q => string.IsNullOrWhiteSpace(q.Content) || string.IsNullOrWhiteSpace(q.QuestionType)))
             {
-                return Result<bool>.Failure("Invalid question data found.");
+                return Result<bool>.Failure("تم العثور على بيانات أسئلة غير صالحة.");
             }
             var result = await repository.AddRingQuestionsFromExcel(request.questionBankId, addquestions.ToList());
             return Result<bool>.Success(result.Data);

@@ -20,11 +20,12 @@ namespace Elm.Application.Features.College.Handlers
         public async Task<Result<bool>> Handle(DeleteCollegeCommand request, CancellationToken cancellationToken)
         {
             var college = await repository.GetByIdAsync(request.Id);
+            if (college == null)
+            {
+                return Result<bool>.Failure("الكلية غير موجودة", 404);
+            }
 
-            // ✅ استخدام null-coalescing operator للتعامل مع القيمة الفارغة
-            int imageId = college.ImgId ?? 0;
-
-            var deleteImageResult = await fileStorage.DeleteCollegeImageAsync(college.Id, imageId, "colleges");
+            var deleteImageResult = await fileStorage.DeleteCollegeAsync(college.Id);
 
             if (!deleteImageResult.IsSuccess)
             {

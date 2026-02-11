@@ -1,4 +1,6 @@
-﻿using Elm.Domain.Entities;
+﻿using Elm.Domain.Common;
+using Elm.Domain.Entities;
+using MediatR;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -6,9 +8,14 @@ namespace Elm.Infrastructure
 {
     public class AppDbContext : IdentityDbContext<AppUser, Role, string>
     {
-        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
+        private readonly IMediator _mediator;
+
+        public AppDbContext(DbContextOptions<AppDbContext> options, IMediator mediator) : base(options)
         {
+            _mediator = mediator;
         }
+
+        public DbSet<Settings> Settings { get; set; }
 
         #region Academic
         public DbSet<University> Universities { get; set; }
@@ -49,16 +56,21 @@ namespace Elm.Infrastructure
         public DbSet<UserPermissions> UserPermissions { get; set; }
 
         #endregion
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
+
+            builder.Entity<Settings>()
+                .HasIndex(s => s.Key)
+                .IsUnique();
 
             #region  University
             builder.Entity<University>()
                 .HasOne(u => u.Img)
                 .WithOne(i => i.University)
                 .HasForeignKey<University>(u => u.ImgId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.Cascade);
 
             builder.Entity<University>()
                 .HasIndex(u => u.Name)
@@ -108,13 +120,13 @@ namespace Elm.Infrastructure
                 .HasOne(qb => qb.Curriculum)
                 .WithMany(c => c.QuestionsBanks)
                 .HasForeignKey(qb => qb.CurriculumId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.Cascade);
 
             builder.Entity<Question>()
                 .HasOne(q => q.QuestionBank)
                 .WithMany(qb => qb.Questions)
                 .HasForeignKey(q => q.QuestionBankId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.Cascade);
 
             builder.Entity<Option>()
                 .HasOne(o => o.Question)
@@ -163,6 +175,10 @@ namespace Elm.Infrastructure
                 .WithMany(c => c.Years)
                 .HasForeignKey(y => y.CollegeId)
                 .OnDelete(DeleteBehavior.Restrict); // حماية الكلية من حذف سنواتها بالخطأ
+
+            builder.Entity<Year>()
+                .HasIndex(y => new { y.CollegeId, y.Name })
+                .IsUnique(); // ضمان عدم تكرار أسماء السنوات داخل نفس الكلية
             #endregion
 
             #region Curriculum
@@ -174,6 +190,33 @@ namespace Elm.Infrastructure
                 entity.HasOne(c => c.Department).WithMany(d => d.Curriculums).HasForeignKey(c => c.DepartmentId).OnDelete(DeleteBehavior.Restrict);
                 entity.HasOne(c => c.Doctor).WithMany(d => d.Curriculums).HasForeignKey(c => c.DoctorId).OnDelete(DeleteBehavior.Restrict);
             });
+            #endregion
+
+            #region Files
+
+            builder.Entity<Files>()
+                .HasOne(f => f.UploadedBy)
+                .WithMany(x => x.UploadedFiles)
+                .HasForeignKey(f => f.UploadedById)
+                .OnDelete(DeleteBehavior.Restrict); // لضمان بقاء الملفات حتى لو حُذف حساب الرافع
+
+            builder.Entity<Files>()
+                .HasOne(f => f.Curriculum)
+                .WithMany(x => x.Files)
+                .HasForeignKey(f => f.CurriculumId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // this is optional description
+            builder.Entity<Files>()
+                .Property(f => f.Description)
+                  .IsRequired(false);
+
+            builder.Entity<Files>()
+                .HasOne(f => f.RatedByDoctor)
+                .WithMany(d => d.RatedFiles)
+                .HasForeignKey(f => f.RatedByDoctorId)
+                .OnDelete(DeleteBehavior.Restrict); // لضمان بقاء الملفات حتى لو حُذف حساب الدكتور الذي قيم الملف
+
             #endregion
 
             #region Students
@@ -194,28 +237,6 @@ namespace Elm.Infrastructure
                 .WithMany(d => d.Students)
                 .HasForeignKey(s => s.DepartmentId)
                 .OnDelete(DeleteBehavior.Restrict); // تعديل لـ Restrict
-            #endregion
-
-            #region Files
-
-            builder.Entity<Files>()
-                .HasOne(f => f.UploadedBy)
-                .WithMany(x => x.UploadedFiles)
-                .HasForeignKey(f => f.UploadedById)
-                .OnDelete(DeleteBehavior.Restrict); // لضمان بقاء الملفات حتى لو حُذف حساب الرافع
-
-            builder.Entity<Files>()
-                .HasOne(f => f.Curriculum)
-                .WithMany(x => x.Files)
-                .HasForeignKey(f => f.CurriculumId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            builder.Entity<Files>()
-                .HasOne(f => f.RatedByDoctor)
-                .WithMany(d => d.RatedFiles)
-                .HasForeignKey(f => f.RatedByDoctorId)
-                .OnDelete(DeleteBehavior.Restrict); // لضمان بقاء الملفات حتى لو حُذف حساب الدكتور الذي قيم الملف
-
             #endregion
 
             #region Permissions 
@@ -243,5 +264,31 @@ namespace Elm.Infrastructure
 
         }
 
+        public override async Task<int> SaveChangesAsync(CancellationToken ct = default)
+        {
+            // I want to when Delete an file or image delete the harde file from the storage
+            // 1. التقاط كل الكيانات التي تحتوي على أحداث
+            var entitiesWithEvents = ChangeTracker.Entries<BaseEntity>()
+                .Select(e => e.Entity)
+                .Where(e => e.DomainEvents.Any())
+                .ToList();
+
+            // 2. استخراج الأحداث
+            var domainEvents = entitiesWithEvents.SelectMany(e => e.DomainEvents).ToList();
+
+            // 3. حفظ التغييرات في قاعدة البيانات أولاً
+            var result = await base.SaveChangesAsync(ct);
+
+            // 4. إذا نجح الحفظ، قم بنشر الأحداث
+            foreach (var @event in domainEvents)
+            {
+                await _mediator.Publish(@event, ct);
+            }
+
+            // 5. تنظيف الأحداث من الكيانات
+            entitiesWithEvents.ForEach(e => e.ClearDomainEvents());
+
+            return result;
+        }
     }
 }

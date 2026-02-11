@@ -41,13 +41,13 @@ namespace Elm.Infrastructure.Repositories
         public async Task<List<GetPermissionsDto>> GetUserPermissionsByUserIdAsync(string userId)
         {
             return await context.UserPermissions
+                .AsNoTracking()
                 .Where(up => up.AppUserId == userId)
                 .Select(x => new GetPermissionsDto
                 {
                     PermissionId = x.PermissionId,
                     PermissionName = x.Permission.Name
                 })
-                .AsNoTracking()
                 .ToListAsync();
         }
 

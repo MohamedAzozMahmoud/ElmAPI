@@ -1,4 +1,5 @@
-﻿using Elm.Application.Contracts.Features.Subject.DTOs;
+﻿using Elm.Application.Contracts;
+using Elm.Application.Contracts.Features.Subject.DTOs;
 using Elm.Application.Contracts.Features.Subject.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -21,14 +22,14 @@ namespace Elm.API.Controllers
         // GET: api/Subject/departments
         [HttpGet]
         [Route("GetAllSubjects/{departmentId:int}")]
-        [ProducesResponseType(typeof(List<GetSubjectDto>), 200)]
+        [ProducesResponseType(typeof(Result<List<GetSubjectDto>>), 200)]
         public async Task<IActionResult> GetAllSubjects([FromRoute] int departmentId)
-                 => HandleResult(await mediator.Send(new GetAllSubjectQuery(departmentId)));
+                 => HandleResult(await mediator.Send(new GetAllSubjectByDepartmentIdQuery(departmentId)));
 
         // Get: api/Subject/Id
         [HttpGet]
         [Route("GetSubjectById/{id:int}")]
-        [ProducesResponseType(typeof(GetSubjectDto), 200)]
+        [ProducesResponseType(typeof(Result<GetSubjectDto>), 200)]
         public async Task<IActionResult> GetSubjectById([FromRoute] int id)
                  => HandleResult(await mediator.Send(new GetSubjectByIdQuery(id)));
 

@@ -6,6 +6,7 @@ namespace Elm.Application.Contracts.Repositories
     public interface ICollegeRepository : IGenericRepository<College>
     {
         public Task<List<GetCollegeDto>> GetAllCollegeInUniversityAsync(int universityId);
+        public Task<CollegeDto> GetCollegeByIdAsync(int Id);
 
     }
 }

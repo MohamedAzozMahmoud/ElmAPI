@@ -1,5 +1,4 @@
-﻿using AutoMapper;
-using Elm.Application.Contracts;
+﻿using Elm.Application.Contracts;
 using Elm.Application.Contracts.Features.Year.DTOs;
 using Elm.Application.Contracts.Features.Year.Queries;
 using Elm.Application.Contracts.Repositories;
@@ -7,20 +6,21 @@ using MediatR;
 
 namespace Elm.Application.Features.Year.Handlers
 {
-    public sealed class GetYearByIdHandler : IRequestHandler<GetYearByIdQuery, Result<YearDto>>
+    public sealed class GetYearByIdHandler : IRequestHandler<GetYearByIdQuery, Result<GetYearDto>>
     {
         private readonly IYearRepository yearRepository;
-        private readonly IMapper mapper;
-        public GetYearByIdHandler(IYearRepository yearRepository, IMapper mapper)
+        public GetYearByIdHandler(IYearRepository yearRepository)
         {
             this.yearRepository = yearRepository;
-            this.mapper = mapper;
         }
-        public async Task<Result<YearDto>> Handle(GetYearByIdQuery request, CancellationToken cancellationToken)
+        public async Task<Result<GetYearDto>> Handle(GetYearByIdQuery request, CancellationToken cancellationToken)
         {
-            var years = await yearRepository.GetByIdAsync(request.Id);
-            var yearDtos = mapper.Map<YearDto>(years);
-            return Result<YearDto>.Success(yearDtos);
+            var year = await yearRepository.GetYearByIdAsync(request.Id);
+            if (year == null)
+            {
+                return Result<GetYearDto>.Failure("Year not found");
+            }
+            return Result<GetYearDto>.Success(year);
         }
     }
 }

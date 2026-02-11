@@ -6,6 +6,7 @@
         Poor = 1,        // رديء
         Acceptable = 2,  // مقبول
         Good = 3,        // جيد
-        Excellent = 4    // ممتاز
+        VeryGood = 4,    // جيد جداً
+        Excellent = 5    // ممتاز
     }
 }

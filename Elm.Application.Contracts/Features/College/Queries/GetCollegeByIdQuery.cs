@@ -6,5 +6,5 @@ namespace Elm.Application.Contracts.Features.College.Queries
     public record GetCollegeByIdQuery
         (
         int Id
-    ) : IRequest<Result<GetCollegeDto>>;
+    ) : IRequest<Result<CollegeDto>>;
 }

@@ -1,31 +1,32 @@
-﻿using AutoMapper;
-using Elm.Application.Contracts;
+﻿using Elm.Application.Contracts;
 using Elm.Application.Contracts.Features.Year.Commands;
-using Elm.Application.Contracts.Features.Year.DTOs;
 using Elm.Application.Contracts.Repositories;
 using MediatR;
 
 namespace Elm.Application.Features.Year.Handlers
 {
-    public sealed class UpdateYearHandler : IRequestHandler<UpdateYearCommand, Result<YearDto>>
+    public sealed class UpdateYearHandler : IRequestHandler<UpdateYearCommand, Result<bool>>
     {
         private readonly IYearRepository yearRepository;
-        private readonly IMapper mapper;
-        public UpdateYearHandler(IYearRepository yearRepository, IMapper mapper)
+
+        public UpdateYearHandler(IYearRepository yearRepository)
         {
             this.yearRepository = yearRepository;
-            this.mapper = mapper;
         }
-        public async Task<Result<YearDto>> Handle(UpdateYearCommand request, CancellationToken cancellationToken)
+        public async Task<Result<bool>> Handle(UpdateYearCommand request, CancellationToken cancellationToken)
         {
-            var year = mapper.Map<Domain.Entities.Year>(request);
-            var updatedYear = await yearRepository.UpdateAsync(year);
-            if (updatedYear != null)
+            var year = await yearRepository.GetByIdAsync(request.Id);
+            if (year == null)
             {
-                var yearDto = mapper.Map<YearDto>(updatedYear);
-                return Result<YearDto>.Success(yearDto);
+                return Result<bool>.NotFound("Year not found");
             }
-            return Result<YearDto>.Failure("Failed to update year");
+            year.Name = request.Name;
+            var updatedYear = await yearRepository.UpdateAsync(year);
+            if (updatedYear)
+            {
+                return Result<bool>.Success(true);
+            }
+            return Result<bool>.Failure("Failed to update year");
         }
     }
 }

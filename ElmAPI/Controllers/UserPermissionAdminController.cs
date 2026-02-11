@@ -1,13 +1,13 @@
-﻿using Elm.Application.Contracts.Features.Permissions.Commands;
+﻿using Elm.Application.Contracts;
+using Elm.Application.Contracts.Features.Permissions.Commands;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.RateLimiting;
 
 namespace Elm.API.Controllers
 {
-    [Authorize("Admin")]
-    [EnableRateLimiting("UserRolePolicy")]
+    [Authorize(Roles = "Admin")]
+    //[EnableRateLimiting("UserRolePolicy")]
     [Route("api/admin/[controller]")]
     [ApiController]
     public class UserPermissionAdminController : ApiBaseController
@@ -21,7 +21,7 @@ namespace Elm.API.Controllers
         // api/UserPermission/AddUserPermission
         [HttpPost]
         [Route("AddUserPermission")]
-        [ProducesResponseType(typeof(bool), 200)]
+        [ProducesResponseType(typeof(Result<bool>), 200)]
         public async Task<IActionResult> AddUserPermission([FromBody] AddUserPermissionCommand command)
             => HandleResult(await _mediator.Send(command));
 
@@ -29,7 +29,7 @@ namespace Elm.API.Controllers
         // api/UserPermission/RemoveUserPermission
         [HttpPost]
         [Route("RemoveUserPermission")]
-        [ProducesResponseType(typeof(bool), 200)]
+        [ProducesResponseType(typeof(Result<bool>), 200)]
         public async Task<IActionResult> RemoveUserPermission([FromBody] DeleteUserPermissionCommand command)
             => HandleResult(await _mediator.Send(command));
 

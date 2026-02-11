@@ -1,12 +1,14 @@
 ﻿using Elm.Application.Contracts;
 using Elm.Application.Contracts.Abstractions.Files;
 using Elm.Application.Contracts.Abstractions.Realtime;
+using Elm.Application.Contracts.Abstractions.Settings;
 using Elm.Application.Contracts.Features.Files.DTOs;
 using Elm.Application.Contracts.Features.Images.DTOs;
 using Elm.Domain.Enums;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Elm.Infrastructure.Services.Files
 {
@@ -14,78 +16,72 @@ namespace Elm.Infrastructure.Services.Files
     {
         private readonly IWebHostEnvironment webHostEnvironment;
         private readonly AppDbContext context;
-
         private readonly INotificationService notificationService;
         private const string NotFoundMessage = "File not found";
+        private readonly ISettingsService settingsService;
+        private readonly ILogger<FileStorageService> logger;
 
-        public FileStorageService(IWebHostEnvironment webHostEnvironment, AppDbContext context, INotificationService notificationService)
+        public FileStorageService(ILogger<FileStorageService> logger, ISettingsService settingsService,
+            IWebHostEnvironment webHostEnvironment, AppDbContext context,
+             INotificationService _notificationService)
         {
             this.webHostEnvironment = webHostEnvironment;
             this.context = context;
-            this.notificationService = notificationService;
+            notificationService = _notificationService;
+            this.settingsService = settingsService;
+            this.logger = logger;
+
         }
 
-        public async Task<Result<bool>> DeleteFile(string fileName, string folderName)
+        public async Task<Result<bool>> DeleteFile(string fileName)
         {
             var result = await context.Files.SingleOrDefaultAsync(f => f.StorageName == fileName);
             if (result == null)
             {
                 return Result<bool>.Failure(NotFoundMessage, 404);
             }
-            using (var tr = await context.Database.BeginTransactionAsync())
+            try
             {
-                try
-                {
-                    var uploadsFolderPath = Path.Combine(webHostEnvironment.WebRootPath, folderName);
-                    var filePath = Path.Combine(uploadsFolderPath, fileName);
-                    if (File.Exists(filePath))
-                    {
-                        File.Delete(filePath);
-                        context.Files.Remove(result);
-                        await context.SaveChangesAsync();
-                        await tr.CommitAsync();
-                        return Result<bool>.Success(true);
-                    }
-                    return Result<bool>.Failure(NotFoundMessage, 404);
-                }
-                catch
-                {
-                    await tr.RollbackAsync();
-                    return Result<bool>.Failure("An error occurred while deleting the file.");
-                }
-
+                result.MarkAsDeleted();
+                context.Files.Remove(result);
+                await context.SaveChangesAsync();
+                return Result<bool>.Success(true);
+            }
+            catch
+            {
+                return Result<bool>.Failure("حدث خطأ أثناء حذف الملف.");
             }
         }
-
-
 
         public async Task<Result<string>> UploadFileAsync(int curriculumId, int uploadedById, string description, IFormFile file, string folderName)
         {
             using var tr = await context.Database.BeginTransactionAsync();
             try
             {
-                var student = await context.Students.SingleOrDefaultAsync(s => s.Id == uploadedById);
-                if (student == null)
-                {
-                    return Result<string>.Failure("Student not found.");
-                }
+                // 1. التحققات الأساسية (استخدم AnyAsync للسرعة)
+                if (!await context.Students.AnyAsync(s => s.Id == uploadedById))
+                    return Result<string>.Failure("الطالب غير موجود.");
+
                 var curriculum = await context.Curriculums.FindAsync(curriculumId);
-                if (curriculum == null)
-                {
-                    return Result<string>.Failure("Failed to add file.");
-                }
-                var uploadsFolderPath = Path.Combine(webHostEnvironment.WebRootPath, folderName);
-                if (!Directory.Exists(uploadsFolderPath))
-                {
-                    Directory.CreateDirectory(uploadsFolderPath);
-                }
+                if (curriculum == null) return Result<string>.Failure("المنهج غير موجود", 404);
+
+                // 2. فحص تكرار الاسم والقيود
+                if (await context.Files.AnyAsync(f => f.Name == file.FileName && f.CurriculumId == curriculumId))
+                    return Result<string>.Failure("الملف موجود بالفعل لهذا المنهج.");
+
+                var maxFileSizeSetting = await settingsService.GetMaxStorageBytesAsync();
+                var currentUsage = await context.Files.Where(f => f.CurriculumId == curriculumId).SumAsync(f => f.Size);
+
+                if (file.Length + currentUsage > maxFileSizeSetting)
+                    return Result<string>.Failure("حجم الملف يتجاوز الحد الأقصى المسموح به لهذا المنهج.");
+
+                // 3. تجهيز الملف
                 var uniqueFileName = $"{Guid.NewGuid()}_{file.FileName}";
+                var uploadsFolderPath = Path.Combine(webHostEnvironment.WebRootPath, folderName);
+                if (!Directory.Exists(uploadsFolderPath)) Directory.CreateDirectory(uploadsFolderPath);
                 var filePath = Path.Combine(uploadsFolderPath, uniqueFileName);
-                var currerum = await context.Curriculums.SingleOrDefaultAsync(c => c.Id == curriculumId);
-                if (currerum == null)
-                {
-                    return Result<string>.Failure("Curriculum not found");
-                }
+
+                // 4. الحفظ في القاعدة
                 await context.Files.AddAsync(new Domain.Entities.Files
                 {
                     Name = file.FileName,
@@ -94,27 +90,35 @@ namespace Elm.Infrastructure.Services.Files
                     Size = file.Length,
                     Description = description,
                     StorageName = uniqueFileName,
-                    ProfessorRating = DoctorRating.NotRated,
                     UploadedById = uploadedById
                 });
-                context.Curriculums.Update(currerum);
+
                 await context.SaveChangesAsync();
+
+                // 5. كتابة الملف فيزيائياً
                 using (var fileStream = new FileStream(filePath, FileMode.Create))
                 {
                     await file.CopyToAsync(fileStream);
                 }
-                var doctor = await context.Doctors.SingleOrDefaultAsync(d => d.Id == currerum.DoctorId);
+
                 await tr.CommitAsync();
-                if (doctor != null && doctor.AppUserId != null)
+
+                // 6. الإشعار (Background Task)
+                _ = Task.Run(async () =>
                 {
-                    await notificationService.SendNotificationToUser(doctor.AppUserId, $"تم رفع الملخص من قبل طالب", $"اسم الملخص: {file.FileName}");
-                }
+                    var doctor = await context.Doctors.FirstOrDefaultAsync(d => d.Id == curriculum.DoctorId);
+                    if (doctor?.AppUserId != null)
+                        await notificationService.SendNotificationToUser(doctor.AppUserId, "تم رفع ملخص جديد", $"الملخص: {file.FileName}");
+                });
+
                 return Result<string>.Success(uniqueFileName);
             }
-            catch
+            catch (Exception ex)
             {
+                logger.LogError(ex, "Error uploading file");
                 await tr.RollbackAsync();
-                return Result<string>.Failure("An error occurred while uploading the file.");
+                // اختياري: حذف الملف من الهارد لو اتكريت وفشل الـ Transaction
+                return Result<string>.Failure("حدث خطأ أثناء الرفع.", 500);
             }
         }
 
@@ -139,45 +143,69 @@ namespace Elm.Infrastructure.Services.Files
 
         public async Task<Result<ImageDto>> GetFileAsync(string fileName, string folderName)
         {
+            // Validation
+            if (string.IsNullOrWhiteSpace(fileName))
+                return Result<ImageDto>.Failure("اسم الملف مطلوب", 400);
+
+            if (string.IsNullOrWhiteSpace(folderName))
+                return Result<ImageDto>.Failure("اسم المجلد مطلوب", 400);
+
+            // Path Traversal Attack Prevention
+            if (fileName.Contains("..") || fileName.Contains("/") || fileName.Contains("\\"))
+                return Result<ImageDto>.Failure("اسم الملف غير صالح", 400);
+
             var uploadsFolderPath = Path.Combine(webHostEnvironment.WebRootPath, folderName);
             var filePath = Path.Combine(uploadsFolderPath, fileName);
+
+            // Security: تأكد أن المسار النهائي داخل المجلد المسموح
+            var fullPath = Path.GetFullPath(filePath);
+            var allowedPath = Path.GetFullPath(uploadsFolderPath);
+
+            if (!fullPath.StartsWith(allowedPath))
+                return Result<ImageDto>.Failure("تم رفض الوصول", 403);
+
             if (!File.Exists(filePath))
+                return Result<ImageDto>.Failure("الصورة غير موجودة", 404);
+
+            try
             {
-                throw new FileNotFoundException(NotFoundMessage, fileName);
+                var fileData = await File.ReadAllBytesAsync(filePath);
+                var contentType = GetContentType(fileName);
+
+                return Result<ImageDto>.Success(new ImageDto
+                {
+                    Content = fileData,
+                    ContentType = contentType
+                });
             }
-            var fileData = await File.ReadAllBytesAsync(filePath);
-            var contentType = GetContentType(fileName);
-            return Result<ImageDto>.Success(new ImageDto { Content = fileData, ContentType = contentType });
+            catch (Exception ex)
+            {
+                // Log the exception
+                logger.LogError(ex, "Error reading file: {FileName}", fileName);
+                return Result<ImageDto>.Failure($"حدث خطأ أثناء قراءة الملف: {ex.Message}", 500);
+            }
         }
 
-        public async Task<Result<bool>> DeleteAllFilesByCurriculumId(int curriculumId, string folderName)
+        public async Task<Result<bool>> DeleteAllFilesByCurriculumId(int curriculumId)
         {
-            using var tr = await context.Database.BeginTransactionAsync();
             try
             {
                 var files = await context.Files.Where(f => f.CurriculumId == curriculumId).ToListAsync();
                 if (files.Count == 0)
                 {
-                    return Result<bool>.Failure("No files found for the specified curriculum.");
+                    return Result<bool>.Failure("لا توجد ملفات للمناهج المحددة.", 404);
                 }
-                var uploadsFolderPath = Path.Combine(webHostEnvironment.WebRootPath, folderName);
                 foreach (var file in files)
                 {
-                    var filePath = Path.Combine(uploadsFolderPath, file.StorageName);
-                    if (File.Exists(filePath))
-                    {
-                        File.Delete(filePath);
-                    }
+                    file.MarkAsDeleted();
                 }
                 context.Files.RemoveRange(files);
                 await context.SaveChangesAsync();
-                await tr.CommitAsync();
                 return Result<bool>.Success(true);
             }
             catch
             {
-                await tr.RollbackAsync();
-                return Result<bool>.Failure("An error occurred while deleting the files.");
+                return Result<bool>.Failure("حدث خطأ أثناء حذف الملفات.");
             }
         }
 
@@ -204,72 +232,52 @@ namespace Elm.Infrastructure.Services.Files
             }
         }
 
-        public async Task<Result<bool>> DeleteUniversityImageAsync(int universityId, int id, string folderName)
+        public async Task<Result<bool>> DeleteUniversityAsync(int universityId)
         {
-            var result = await context.Universities.FirstOrDefaultAsync(f => f.Id == universityId);
+            var result = await context.Universities
+                .Include(u => u.Img)
+                .FirstOrDefaultAsync(f => f.Id == universityId);
             if (result == null)
             {
-                return Result<bool>.Failure("University not found", 404);
+                return Result<bool>.Failure("الجامعة غير موجودة", 404);
             }
-            var image = await context.Images.FirstOrDefaultAsync(i => i.Id == id);
-            using var tr = await context.Database.BeginTransactionAsync();
             try
             {
-
-                var uploadsFolderPath = Path.Combine(webHostEnvironment.WebRootPath, folderName);
-                string filePath = string.Empty;
+                if (result.ImgId is not null && result.Img is not null)
+                {
+                    result.Img.MarkAsDeleted();
+                }
                 context.Universities.Remove(result);
-                if (image != null)
-                {
-                    filePath = Path.Combine(uploadsFolderPath, image.StorageName);
-                    context.Images.Remove(image);
-                }
                 await context.SaveChangesAsync();
-                if (File.Exists(filePath))
-                {
-                    File.Delete(filePath);
-                }
-                await tr.CommitAsync();
                 return Result<bool>.Success(true);
             }
             catch
             {
-                await tr.RollbackAsync();
-                return Result<bool>.Failure("An error occurred while deleting the image.", 500);
+                return Result<bool>.Failure("حدث خطأ أثناء حذف الصورة.", 500);
             }
         }
 
-        public async Task<Result<bool>> DeleteCollegeImageAsync(int collegeId, int id, string folderName)
+        public async Task<Result<bool>> DeleteCollegeAsync(int collegeId)
         {
-            var result = await context.Colleges.FirstOrDefaultAsync(f => f.Id == collegeId);
+            var result = await context.Colleges.Include(c => c.Img).FirstOrDefaultAsync(f => f.Id == collegeId);
             if (result == null)
             {
-                return Result<bool>.Failure("College not found", 404);
+                return Result<bool>.Failure("الكلية غير موجودة", 404);
             }
-            var image = await context.Images.FirstOrDefaultAsync(i => i.Id == id);
             using var tr = await context.Database.BeginTransactionAsync();
             try
             {
-                var uploadsFolderPath = Path.Combine(webHostEnvironment.WebRootPath, folderName);
+                if (result.Img is not null && result.ImgId is not null)
+                {
+                    result.Img.MarkAsDeleted();
+                }
                 context.Colleges.Remove(result);
-                string filePath = string.Empty;
-                if (image != null)
-                {
-                    filePath = Path.Combine(uploadsFolderPath, image.StorageName);
-                    context.Images.Remove(image);
-                }
                 await context.SaveChangesAsync();
-                if (File.Exists(filePath))
-                {
-                    File.Delete(filePath);
-                }
-                await tr.CommitAsync();
                 return Result<bool>.Success(true);
             }
             catch
             {
-                await tr.RollbackAsync();
-                return Result<bool>.Failure("An error occurred while deleting the image.", 500);
+                return Result<bool>.Failure("حدث خطأ أثناء حذف الصورة.", 500);
             }
         }
 
@@ -317,12 +325,36 @@ namespace Elm.Infrastructure.Services.Files
             file.RatedAt = DateTime.UtcNow;
             file.RatedByDoctorId = ratedByDoctorId;
             context.Files.Update(file);
-            var result = await context.SaveChangesAsync();
-            if (result != 0)
-            {
-                await notificationService.SendNotificationToUser(file.UploadedBy.AppUserId, comment, $"{file.Name} تم تقييم الملخص");
-            }
+            await context.SaveChangesAsync();
             return Result<bool>.Success(true);
         }
+
+        public async Task<Result<bool>> DeleteImageAsync(string StorageName)
+        {
+            // 1. جلب الصورة مع الكلية المرتبطة بها في طلب واحد
+            var image = await context.Images
+                .Include(i => i.College)
+                .SingleOrDefaultAsync(i => i.StorageName == StorageName);
+
+            if (image == null)
+                return Result<bool>.Failure("لم يتم العثور على الصورة", 404);
+
+            try
+            {
+                image.MarkAsDeleted();
+                if (image.College != null)
+                {
+                    image.College.ImgId = null;
+                }
+                context.Images.Remove(image);
+                await context.SaveChangesAsync();
+                return Result<bool>.Success(true);
+            }
+            catch
+            {
+                return Result<bool>.Failure("حدث خطأ أثناء حذف الصورة.", 500);
+            }
+        }
+
     }
 }

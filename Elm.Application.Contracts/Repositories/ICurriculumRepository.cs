@@ -6,7 +6,10 @@ namespace Elm.Application.Contracts.Repositories
     public interface ICurriculumRepository : IGenericRepository<Curriculum>
     {
         public Task<List<GetCurriculumDto>> GetAllCurriculumsByDeptIdAndYearIdAsync(int departmentId, int yearId);
-        public Task<bool> ExistsByNameAsync(string name);
-        public Task<List<string>> GetFileInfoByIdAsync(int curriculumId);
+        public Task<List<GetCurriculumDto>> GetByDoctorIdAsync(int doctorId);
+        public Task<List<AdminCurriculumDto>> GetBySubjectIdAsync(int subjectId, int pageSize, int pageNumber);
+
+
+
     }
 }

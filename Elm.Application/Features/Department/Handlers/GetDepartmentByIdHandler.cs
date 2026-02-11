@@ -1,8 +1,8 @@
-﻿using AutoMapper;
-using Elm.Application.Contracts;
+﻿using Elm.Application.Contracts;
 using Elm.Application.Contracts.Features.Department.DTOs;
 using Elm.Application.Contracts.Features.Department.Queries;
 using Elm.Application.Contracts.Repositories;
+using Elm.Application.Mapper.Elm.Application.Mappers;
 using MediatR;
 
 namespace Elm.Application.Features.Department.Handlers
@@ -10,11 +10,11 @@ namespace Elm.Application.Features.Department.Handlers
     public sealed class GetDepartmentByIdHandler : IRequestHandler<GetDepartmentByIdQuery, Result<GetDepartmentDto>>
     {
         private readonly IDepartmentRepository repository;
-        private readonly IMapper mapper;
-        public GetDepartmentByIdHandler(IDepartmentRepository repository, IMapper mapper)
+        private readonly MappingProvider _mapping;
+        public GetDepartmentByIdHandler(IDepartmentRepository repository, MappingProvider mapping)
         {
             this.repository = repository;
-            this.mapper = mapper;
+            this._mapping = mapping;
         }
         public async Task<Result<GetDepartmentDto>> Handle(GetDepartmentByIdQuery request, CancellationToken cancellationToken)
         {
@@ -23,7 +23,7 @@ namespace Elm.Application.Features.Department.Handlers
             {
                 return Result<GetDepartmentDto>.Failure("Department not found.");
             }
-            var departmentDto = mapper.Map<GetDepartmentDto>(department);
+            var departmentDto = _mapping.MapToGetDto(department);
             return Result<GetDepartmentDto>.Success(departmentDto);
         }
     }

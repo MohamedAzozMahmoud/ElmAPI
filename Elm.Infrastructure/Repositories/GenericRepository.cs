@@ -27,19 +27,17 @@ namespace Elm.Infrastructure.Repositories
             if (entity == null)
                 return false;
             _dbSet.Remove(entity);
-            await context.SaveChangesAsync();
-            return true;
+            return await context.SaveChangesAsync() > 0;
         }
 
         public async Task<T> FindAsync(Expression<Func<T, bool>> predicate)
         {
-            return await _dbSet.FirstOrDefaultAsync(predicate);
+            return await _dbSet.AsNoTracking().FirstOrDefaultAsync(predicate);
         }
 
         public async Task<List<T>> GetAllAsync()
         {
-            var entities = await _dbSet.ToListAsync();
-            return entities;
+            return await _dbSet.AsNoTracking().ToListAsync();
         }
 
         public async Task<T> GetByIdAsync(int id)
@@ -47,11 +45,11 @@ namespace Elm.Infrastructure.Repositories
             return await _dbSet.FindAsync(id);
         }
 
-        public async Task<T> UpdateAsync(T entity)
+        public async Task<bool> UpdateAsync(T entity)
         {
             _dbSet.Update(entity);
-            await context.SaveChangesAsync();
-            return entity;
+            return await context.SaveChangesAsync() > 0;
         }
+
     }
 }

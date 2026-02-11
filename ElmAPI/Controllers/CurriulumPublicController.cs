@@ -1,4 +1,5 @@
-﻿using Elm.Application.Contracts.Features.Curriculum.DTOs;
+﻿using Elm.Application.Contracts;
+using Elm.Application.Contracts.Features.Curriculum.DTOs;
 using Elm.Application.Contracts.Features.Curriculum.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -20,19 +21,32 @@ namespace Elm.API.Controllers
 
 
         // Get: api/CurriculumControllers
-        //GetAllCurriculumsByDeptIdAndYearIdAsync
         [HttpGet]
         [Route("GetAllByDeptIdAndYearId/{departmentId:int}")]
-        [ProducesResponseType(typeof(List<GetCurriculumDto>), 200)]
+        [ProducesResponseType(typeof(Result<List<GetCurriculumDto>>), 200)]
         public async Task<IActionResult> GetAllByDeptIdAndYearIdAsync([FromRoute] int departmentId, [FromQuery] int yearId)
         => HandleResult(await mediator.Send(new GetAllCurriculumQuery(departmentId, yearId)));
 
         // Get: api/CurriculumControllers/Id
         [HttpGet]
         [Route("GetById/{id:int}")]
-        [ProducesResponseType(typeof(GetCurriculumDto), 200)]
+        [ProducesResponseType(typeof(Result<GetCurriculumDto>), 200)]
         public async Task<IActionResult> GetByIdAsync([FromRoute] int id)
             => HandleResult(await mediator.Send(new GetCurriculumByIdQuery(id)));
+
+        // Get: api/CurriculumControllers/ByDoctorId/{doctorId}
+        [HttpGet]
+        [Route("ByDoctorId/{UserId}")]
+        [ProducesResponseType(typeof(Result<List<GetCurriculumDto>>), 200)]
+        public async Task<IActionResult> GetByDoctorIdAsync([FromRoute] string UserId)
+            => HandleResult(await mediator.Send(new GetCurriculumByDoctorIdQuery(UserId)));
+
+        // Get: api/CurriculumControllers/ByStudentId/{studentId}
+        [HttpGet]
+        [Route("ByStudentId/{UserId}")]
+        [ProducesResponseType(typeof(Result<List<GetCurriculumDto>>), 200)]
+        public async Task<IActionResult> GetByStudentIdAsync([FromRoute] string UserId)
+            => HandleResult(await mediator.Send(new GetCurriculumByStudentIdQuery(UserId)));
 
 
     }
